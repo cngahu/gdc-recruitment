@@ -115,7 +115,7 @@
 
 
 <footer class="footer footer-alt">
-    &copy;  <a href="https://psasb.go.ke/" class="text-black-50" target="_blank" style="font-weight: bolder">GDC</a>   <script class="text-dark">document.write(new Date().getFullYear())</script>
+    &copy;  <a href="https://www.gdc.co.ke/" class="text-black-50" target="_blank" style="font-weight: bolder">GDC</a>   <script class="text-dark">document.write(new Date().getFullYear())</script>
 </footer>
 
 <!-- Vendor js -->
