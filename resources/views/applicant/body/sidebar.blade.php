@@ -292,7 +292,11 @@
 
 </div>
 <style>
-
+    /* 
+      Ensures all text uses Poppins by default. 
+      You already have this, but just re-listing it here.
+    */
+    * {
         font-family: 'Poppins', sans-serif !important;
     }
 
