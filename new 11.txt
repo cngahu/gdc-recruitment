@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Full Project Report</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --font-family-base: 'Montserrat', sans-serif;
+      --primary-color: #157347;
+      --primary-dark: #125f33;
+      --secondary-color: #28a745;
+      --accent-color: #0dcaf0;
+      --warning-color: #ffc107;
+      --header-gradient: linear-gradient(135deg, #157347, #125f33);
+      --summary-bg: #fff8e1;
+      --toc-bg: #e1f5fe;
+      --cluster-bg: #dcedc8;
+      --analysis-bg: #fff3cd;
+      --body-bg: #f9fafb;
+      --text-color: #2c3e50;
+      --light-gray: #f8f9fa;
+      --border-color: #ccc;
+      --box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      --transition-speed: 0.3s;
+      
+      /* Status colors */
+      --status-green: #28a745;  /* Reported */
+      --status-red: #dc3545;    /* Not Reported */
+    }
+    html, body {
+      margin: 0; padding: 0; 
+      font-family: var(--font-family-base);
+      background: var(--body-bg);
+      color: var(--text-color);
+    }
+    body {
+      margin: 25px;
+      font-size: 13px;
+      line-height: 1.6;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    header, footer {
+      text-align: center;
+      color: white;
+      background: var(--header-gradient);
+      padding: 12px;
+    }
+    header h1 { font-size: 24px; margin: 0; }
+    header h2 { font-size: 18px; margin: 5px 0; }
+    header p { margin: 0; font-size: 13px; }
+    .print-btn {
+      display: block;
+      width: 150px;
+      margin: 20px auto;
+      padding: 12px;
+      background-color: var(--primary-color);
+      color: #fff;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      border: none;
+      box-shadow: var(--box-shadow);
+    }
+    .header-content {
+      background: var(--primary-color);
+      color: white;
+      padding: 25px;
+      text-align: center;
+      border-radius: 8px;
+      box-shadow: var(--box-shadow);
+      margin-bottom: 70px;
+    }
+    .section, .summary-section, .toc-section, .analysis-section {
+      background: white;
+      margin-bottom: 30px;
+      padding: 20px;
+      border-radius: 8px;
+      border: 2px solid var(--border-color);
+      box-shadow: var(--box-shadow);
+    }
+    .summary-section { background: var(--summary-bg); border-left: 5px solid var(--primary-color); }
+    .toc-section { background: var(--toc-bg); border-left: 5px solid var(--secondary-color); }
+    .analysis-section { background: var(--analysis-bg); border-left: 6px solid var(--warning-color); }
+    .project-counter { font-weight: bold; }
+    .output-title {
+      margin-top: 14px;
+      padding: 10px 15px;
+      background: #e8f6f0;
+      border-left: 5px solid var(--secondary-color);
+      font-weight: 600;
+      border-radius: 4px;
+    }
+    .indicator-title {
+      margin: 10px 0 8px;
+      padding: 10px 15px;
+      background: #f0faff;
+      border-left: 4px solid var(--accent-color);
+      font-size: 13px;
+      border-radius: 4px;
+    }
+    .cluster-heading {
+      background: var(--cluster-bg);
+      border-left: 6px solid var(--primary-color);
+      padding: 14px 20px;
+      font-size: 18px;
+      margin-top: 40px;
+      margin-bottom: 20px;
+      font-weight: 600;
+      border-radius: 4px;
+      border: 1px solid var(--border-color);
+    }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { border: 1px solid var(--border-color); padding: 8px; text-align: left; }
+    th { background: var(--light-gray); }
+    .text-center { text-align: center; }
+    /* Print Styles */
+    @media print {
+      .print-btn, .filters-row { display: none !important; }
+      body { margin-top: 120px; margin-bottom: 100px; }
+      body:before {
+        content: "CONFIDENTIAL";
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) rotate(-45deg);
+        font-size: 120px;
+        color: rgba(0, 0, 0, 0.08);
+        z-index: -1;
+      }
+    }
+  </style>
+  
+  <script>
+    function printReport() { window.print(); }
+  </script>
+</head>
+<body>
+  <!-- Header Section -->
+  <header>
+    <h1>National Government Dashboard System (NGDS)</h1>
+    <h2>Full Project Report</h2>
+    <p>Report generated on: {{ \Carbon\Carbon::now()->format('l, F j, Y g:i A') }}</p>
+  </header>
+
+  <!-- Print Button -->
+  <div class="text-center mb-4">
+    <button class="print-btn" onclick="printReport()">Print Report</button>
+  </div>
+
+  @php
+    // Calculate overall metrics from the $projects collection
+    $totalProjects      = $projects->count();
+    $totalEstimatedCost = $projects->sum('estimated_cost');
+    $totalOutputs       = $projects->sum(fn($p) => $p->outputs->count());
+    $totalIndicators    = $projects->sum(fn($p) => $p->outputs->sum(fn($o) => $o->indicators->count()));
+    $totalTargets       = $projects->sum(fn($p) => $p->outputs->sum(fn($o) => $o->indicators->sum(fn($i) => $i->targets->count())));
+    
+    // Group projects by cluster name (fallback to 'Unclustered' if missing)
+    $clusters = $projects->groupBy(fn($p) => optional($p->cluster)->name ?: 'Unclustered');
+    $totalClusters = $clusters->count();
+  @endphp
+
+  <!-- Overall Summary -->
+  <div class="summary-section mb-4">
+    <h3 class="mb-3">Overall Summary</h3>
+    <table class="table table-bordered">
+      <tr>
+        <th>Total Projects</th>
+        <td>{{ $totalProjects }}</td>
+      </tr>
+      <tr>
+        <th>Total Estimated Cost</th>
+        <td>KES {{ number_format($totalEstimatedCost, 2) }}</td>
+      </tr>
+      <tr>
+        <th>Total Clusters</th>
+        <td>{{ $totalClusters }}</td>
+      </tr>
+      <tr>
+        <th>Total Outputs</th>
+        <td>{{ $totalOutputs }}</td>
+      </tr>
+      <tr>
+        <th>Total Indicators</th>
+        <td>{{ $totalIndicators }}</td>
+      </tr>
+      <tr>
+        <th>Total Targets</th>
+        <td>{{ $totalTargets }}</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- Table of Contents -->
+  <div class="toc-section mb-4">
+    <h3 class="mb-3">Table of Contents</h3>
+    @foreach($clusters as $clusterName => $clusterProjects)
+      <div class="mb-2">
+        <strong>{{ $clusterName }}</strong> ({{ $clusterProjects->count() }} projects)
+        <ul>
+          @foreach($clusterProjects as $i => $p)
+            <li>Project {{ $i + 1 }}: {{ $p->project_name }}</li>
+          @endforeach
+        </ul>
+      </div>
+    @endforeach
+  </div>
+
+  <!-- Filter & Sort Controls (Cluster Filter Only) -->
+  <div class="filters-row mb-4">
+    <div class="col-md-6">
+      <label for="clusterFilter" class="fw-bold">Filter by Cluster:</label>
+      <select id="clusterFilter" class="form-select">
+        <option value="">All Clusters</option>
+        @foreach($clusters as $clusterName => $group)
+          <option value="{{ $clusterName }}">{{ $clusterName }}</option>
+        @endforeach
+      </select>
+    </div>
+    <div class="col-md-6">
+      <label class="fw-bold d-block">Sort Clusters:</label>
+      <button class="btn btn-secondary w-100" id="sortClustersBtn">Sort Alphabetically</button>
+    </div>
+  </div>
+
+  <!-- Detailed Cluster Sections -->
+  <div id="clusterSectionsContainer">
+    @foreach($clusters as $clusterName => $clusterProjects)
+      <div class="cluster-section" data-cluster="{{ $clusterName }}">
+        <div class="cluster-heading my-4 p-2">
+          <h3>Cluster: {{ $clusterName }}</h3>
+        </div>
+        @foreach($clusterProjects as $index => $project)
+          @php
+            $regionName   = optional($project->region)->name ?: 'Unknown';
+            $countyName   = optional($project->county)->name ?: 'Unknown';
+            $ministryName = optional($project->ministry)->name ?: 'Unknown';
+            $categoryName = $project->category ?: 'Unknown';
+            $totalBudgetForProject = $project->budgets->sum('budget_amount');
+          @endphp
+          <div class="project"
+               data-region="{{ $regionName }}"
+               data-county="{{ $countyName }}"
+               data-ministry="{{ $ministryName }}"
+               data-category="{{ $categoryName }}">
+            <h4 class="project-counter">📌 Project {{ $index + 1 }}: {{ $project->project_name }}</h4>
+            <table class="table table-bordered">
+              <tr>
+                <th>Ministry</th>
+                <td>{{ $ministryName }}</td>
+              </tr>
+              <tr>
+                <th>State Department</th>
+                <td>{{ optional($project->stateDepartment)->name ?: 'Not Provided' }}</td>
+              </tr>
+              <tr>
+                <th>Institution</th>
+                <td>{{ optional($project->institution)->name ?: 'Not Provided' }}</td>
+              </tr>
+              <tr>
+                <th>Category</th>
+                <td>{{ $categoryName }}</td>
+              </tr>
+              <tr>
+                <th>Cluster</th>
+                <td>{{ optional($project->cluster)->name ?: 'Not Provided' }}</td>
+              </tr>
+              <tr>
+                <th>Objective</th>
+                <td>{{ $project->objective ?: 'Not Provided' }}</td>
+              </tr>
+              <tr>
+                <th>Total Project Cost</th>
+                <td>KES {{ number_format($project->estimated_cost, 2) }}</td>
+              </tr>
+              <tr>
+                <th>Planned Duration</th>
+                <td>
+                  {{ optional($project->planned_start_date)->format('Y-m-d') ?: '-' }} to 
+                  {{ optional($project->planned_end_date)->format('Y-m-d') ?: '-' }}
+                </td>
+              </tr>
+              <tr>
+                <th>Region</th>
+                <td>{{ $regionName }}</td>
+              </tr>
+              <tr>
+                <th>County</th>
+                <td>{{ $countyName }}</td>
+              </tr>
+              <tr>
+                <th>Sub-County</th>
+                <td>{{ optional($project->subCounty)->name ?: 'Not Provided' }}</td>
+              </tr>
+              <tr>
+                <th>Financier Option</th>
+                <td>{{ $project->financier_option ?: 'Not Provided' }}</td>
+              </tr>
+              <tr>
+                <th>Financier Details</th>
+                <td>{{ $project->financier_details ?: 'GOK' }}</td>
+              </tr>
+              <tr>
+                <th>GPS Coordinates</th>
+                <td>{{ $project->gps_coordinates ?: 'Not Provided' }}</td>
+              </tr>
+              <tr>
+                <th>Supporting Agencies</th>
+                <td>
+                  @if($project->supporting_agencies && count($project->supporting_agencies) > 0)
+                    {{ implode(', ', $project->supporting_agencies) }}
+                  @else
+                    Not Provided
+                  @endif
+                </td>
+              </tr>
+            </table>
+
+            <!-- Budget Summary -->
+            <h5 class="mt-2">Budget Summary</h5>
+            <p><strong>Total for all FY:</strong> KES {{ number_format($totalBudgetForProject, 2) }}</p>
+            <table class="table table-bordered">
+              <thead class="bg-secondary text-white">
+                <tr>
+                  <th>Financial Year</th>
+                  <th>Quarter</th>
+                  <th>Budget (KES)</th>
+                  <th>Spent (KES)</th>
+                </tr>
+              </thead>
+              <tbody>
+                @forelse($project->budgets as $b)
+                  <tr>
+                    <td>{{ optional($b->financialYear)->year ?: 'Not Provided' }}</td>
+                    <td>{{ optional($b->quarter)->quarter ?: 'Not Provided' }}</td>
+                    <td>{{ number_format($b->budget_amount, 2) }}</td>
+                    <td>{{ number_format($b->amount_spent, 2) }}</td>
+                  </tr>
+                @empty
+                  <tr>
+                    <td colspan="4" class="text-muted">No budget data available</td>
+                  </tr>
+                @endforelse
+              </tbody>
+            </table>
+
+            <!-- Outputs & Indicators -->
+            @forelse($project->outputs as $output)
+              <div class="output-title mt-3">
+                <h5>Output: {{ $output->name }}</h5>
+              </div>
+              @forelse($output->indicators as $indicator)
+                @php
+                  $filteredTargets = $indicator->targets->filter(function($t) {
+                    $year    = optional($t->fy)->year;
+                    $quarter = optional($t->quarter)->quarter;
+                    return ($year === '2023/2024' && $quarter === 'Q4')
+                        || ($year === '2024/2025' && in_array($quarter, ['Q1','Q2']));
+                  });
+                  $uniqueTargets  = $filteredTargets->unique(fn($t) => (optional($t->fy)->year ?? '') . '-' . (optional($t->quarter)->quarter ?? ''));
+                  $groupedTargets = $uniqueTargets->groupBy(fn($t) => optional($t->fy)->year ?? 'Not Provided');
+                @endphp
+                <div class="indicator-title mt-2">
+                  <strong>Indicator:</strong> {{ $indicator->name }}<br>
+                  <small>
+                    <strong>Unit:</strong> {{ $indicator->unit_of_measure }} |
+                    <strong>Baseline:</strong> {{ $indicator->baseline_value ?: '-' }}
+                    ({{ $indicator->baseline_year ?: '-' }})
+                  </small>
+                </div>
+                @if($groupedTargets->isNotEmpty())
+                  @foreach($groupedTargets as $year => $targets)
+                    <h6 class="mt-2">Financial Year: {{ $year }}</h6>
+                    <table class="table table-bordered">
+                      <thead class="bg-secondary text-white">
+                        <tr>
+                          <th>#</th>
+                          <th>Quarter</th>
+                          <th>Target</th>
+                          <th>Status</th>
+                          <th>Challenges</th>
+                          <th>Comments</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @foreach($targets as $i => $target)
+                          @php
+                            $report = $target->reports->first();
+                          @endphp
+                          <tr>
+                            <td>{{ $i + 1 }}</td>
+                            <td>{{ optional($target->quarter)->quarter ?: 'Not Provided' }}</td>
+                            <td>{{ $target->target_value }}</td>
+                            <td class="{{ $report ? 'status-reported' : 'status-missing' }}">
+                              {{ optional($report)->progress_status ?: 'Not Reported' }}
+                            </td>
+                            <td>{{ optional($report)->challenges ?: '-' }}</td>
+                            <td>{{ optional($report)->comments ?: '-' }}</td>
+                          </tr>
+                        @endforeach
+                      </tbody>
+                    </table>
+                  @endforeach
+                @else
+                  <p class="no-data">No targets available for this indicator.</p>
+                @endif
+              @empty
+                <p class="no-data">No indicators found for this output.</p>
+              @endforelse
+            @empty
+              <p class="no-data">No outputs defined for this project.</p>
+            @endforelse
+          </div> <!-- end .project -->
+        @endforeach
+      </div> <!-- end .cluster-section -->
+    @endforeach
+  </div><!-- end #clusterSectionsContainer -->
+
+  <!-- Indicator Summary (Placed Last) -->
+  <div class="section mb-4">
+    <h3 class="project-counter mb-3">Indicators Summary</h3>
+    <table class="table table-bordered">
+      <thead class="bg-secondary text-white">
+        <tr>
+          <th>#</th>
+          <th>Project</th>
+          <th>Output</th>
+          <th>Indicator</th>
+          <th>Unit</th>
+          <th>Baseline</th>
+        </tr>
+      </thead>
+      <tbody>
+        @php $counter = 1; @endphp
+        @foreach($projects as $project)
+          @foreach($project->outputs as $output)
+            @foreach($output->indicators as $indicator)
+              <tr>
+                <td>{{ $counter++ }}</td>
+                <td>{{ $project->project_name }}</td>
+                <td>{{ $output->name }}</td>
+                <td>{{ $indicator->name }}</td>
+                <td>{{ $indicator->unit_of_measure }}</td>
+                <td>{{ $indicator->baseline_value }} ({{ $indicator->baseline_year }})</td>
+              </tr>
+            @endforeach
+          @endforeach
+        @endforeach
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Further Analysis -->
+  <div class="analysis-section my-4">
+    <h3 class="analysis-title">Further Analysis</h3>
+    <ul>
+      <li><strong>Reporting Efficiency:</strong> Some indicators were not reported.</li>
+      <li><strong>Cost Distribution:</strong> Budget allocation varies by cluster.</li>
+      <li><strong>Cluster Performance:</strong> Performance varies by region.</li>
+      <li><strong>Planning:</strong> Use this for milestone tracking and adjustments.</li>
+    </ul>
+  </div>
+
+  <div class="footer-screen text-center my-3">
+    <p>Report generated on: {{ \Carbon\Carbon::now()->format('l, F j, Y g:i A') }}</p>
+  </div>
+</div><!-- end .container -->
+
+<script>
+function printReport() {
+  window.print();
+}
+function showFullObjective() {
+  document.getElementById('objective-short').style.display = 'none';
+  document.getElementById('objective-full').style.display = 'block';
+}
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  // Cluster Filter
+  const clusterFilter = document.getElementById('clusterFilter');
+  clusterFilter.addEventListener('change', function() {
+    const selectedCluster = this.value;
+    document.querySelectorAll('.cluster-section').forEach(section => {
+      if (!selectedCluster || section.dataset.cluster === selectedCluster) {
+        section.style.display = 'block';
+      } else {
+        section.style.display = 'none';
+      }
+    });
+  });
+
+  // Sort Clusters Alphabetically
+  const sortClustersBtn = document.getElementById('sortClustersBtn');
+  sortClustersBtn.addEventListener('click', function() {
+    const container = document.getElementById('clusterSectionsContainer');
+    const sections = Array.from(container.querySelectorAll('.cluster-section'));
+    sections.sort((a, b) => a.dataset.cluster.localeCompare(b.dataset.cluster));
+    sections.forEach(section => container.appendChild(section));
+  });
+});
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  // Handle Edit Budget buttons
+  document.querySelectorAll(".editBudget").forEach(button => {
+    button.addEventListener("click", function() {
+      let id = this.getAttribute("data-id");
+      let year = this.getAttribute("data-year");
+      let amount = this.getAttribute("data-amount");
+      let type = this.getAttribute("data-type");
+
+      document.getElementById("budget_id").value = id;
+      document.getElementById("financial_year").value = year;
+      document.getElementById("amount").value = amount;
+      document.getElementById("budget_type").value = type;
+
+      if (type === "expenditure") {
+        let quarter = this.getAttribute("data-quarter");
+        let spent = this.getAttribute("data-spent");
+        document.getElementById("quarter").value = quarter;
+        document.getElementById("amount_spent").value = spent;
+        document.getElementById("quarterField").classList.remove("d-none");
+        document.getElementById("spentAmountField").classList.remove("d-none");
+      } else {
+        document.getElementById("quarterField").classList.add("d-none");
+        document.getElementById("spentAmountField").classList.add("d-none");
+      }
+      new bootstrap.Modal(document.getElementById("editBudgetModal")).show();
+    });
+  });
+
+  // Submit Edit Budget form via AJAX
+  document.getElementById("budgetForm").addEventListener("submit", function(event) {
+    event.preventDefault();
+    let id = document.getElementById("budget_id").value;
+    let type = document.getElementById("budget_type").value;
+    let url = (type === "estimate") ? `/budget-estimates/${id}` : `/budgets/${id}`;
+    fetch(url, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRF-TOKEN": "{{ csrf_token() }}"
+      },
+      body: JSON.stringify({
+        amount: document.getElementById("amount").value,
+        amount_spent: document.getElementById("amount_spent")?.value || null
+      })
+    }).then(response => response.json())
+      .then(data => location.reload());
+  });
+});
+</script>
+
+<!-- Edit Budget Modal -->
+<div class="modal fade" id="editBudgetModal" tabindex="-1" aria-labelledby="editBudgetModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="editBudgetModalLabel">Edit Budget</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form id="budgetForm">
+        @csrf
+        @method('PUT')
+        <div class="modal-body">
+          <input type="hidden" id="budget_id" name="id">
+          <input type="hidden" id="budget_type" name="type">
+          <div class="mb-3">
+            <label for="financial_year" class="form-label">Financial Year</label>
+            <input type="text" id="financial_year" class="form-control" disabled>
+          </div>
+          <div id="quarterField" class="mb-3 d-none">
+            <label for="quarter" class="form-label">Quarter</label>
+            <input type="text" id="quarter" class="form-control" disabled>
+          </div>
+          <div class="mb-3">
+            <label for="amount" class="form-label">Budget Amount (Ksh)</label>
+            <input type="number" id="amount" name="amount" class="form-control" required>
+          </div>
+          <div id="spentAmountField" class="mb-3 d-none">
+            <label for="amount_spent" class="form-label">Amount Spent (Ksh)</label>
+            <input type="number" id="amount_spent" name="amount_spent" class="form-control">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="submit" class="btn btn-primary">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

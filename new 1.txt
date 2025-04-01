@@ -1,0 +1,835 @@
+<?php
+
+use app\modules\ef\models\Allocation;
+use yii\helpers\Html;
+use yii\helpers\Url;
+use yii\grid\ActionColumn;
+use yii\grid\GridView;
+use yii\widgets\ActiveForm;
+use yii\helpers\ArrayHelper;
+
+/** @var yii\web\View $this */
+/** @var app\modules\ef\models\AllocationSearch $searchModel */
+/** @var yii\data\ActiveDataProvider $dataProvider */
+
+$this->title = strtoupper('Equalisation Fund Allocations from its Establishment');
+$this->params['breadcrumbs'][] = $this->title;
+
+// Custom CSS for improved UI
+$css = <<<CSS
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: #f4f7f6;
+    color: #333;
+}
+
+.allocation-index {
+    background-color: #ffffff;
+    padding: 25px;
+    border-radius: 10px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Headings */
+.allocation-index h1 {
+    color: white;
+    font-weight: 700;
+    font-size: 30px;
+    margin-bottom: 20px;
+    text-align: center;
+    background-color: #1b5e20;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.3);
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.table thead th {
+    background-color: #1b5e20 !important;
+    color: white !important;
+    font-weight: 600;
+    text-transform: uppercase;
+    padding: 12px;
+    text-align: center;
+}
+
+.table tbody tr:hover {
+    background-color: #c8e6c9;
+}
+
+.fw-bold.text-success {
+    color: #1b5e20 !important;
+}
+
+/* Button Styling */
+.btn-primary {
+    background-color: #2e7d32;
+    border-color: #1b5e20;
+    font-weight: 600;
+}
+
+.btn-primary:hover {
+    background-color: #1b5e20;
+}
+
+CSS;
+
+$this->registerCss($css);
+?>
+
+<div class="allocation-index">
+
+<h1 style="
+    color: white !important; 
+    font-size: 2rem; 
+    font-weight: bold; 
+    text-align: center; 
+    text-transform: uppercase;
+    margin: 10px 0;
+    padding: 15px;
+    background: #4682B4; /* Steel Blue */
+    border-radius: 8px;">
+    <?= Html::encode($this->title) ?>
+</h1>
+
+  <p>
+        <?= Html::a('<i class="fa fa-file-pdf"></i> Generate Report', ['generate-report'], ['class' => 'btn btn-success']) ?>
+    </p>
+    <div class="search-form">
+        <?php $form = ActiveForm::begin([
+            'action' => ['index'],
+            'method' => 'get',
+        ]); ?>
+
+        <div class="row">
+            <div class="col-md-4">
+                <?= $form->field($searchModel, 'financial_year')->dropDownList(
+                    ArrayHelper::map(
+                        Allocation::find()->select('financial_year')->distinct()->all(),
+                        'financial_year',
+                        'financial_year'
+                    ),
+                    ['prompt' => 'Select Financial Year', 'class' => 'form-control']
+                ) ?>
+            </div>
+            <div class="col-md-4 col-4 col-sm-12">
+                <?= $form->field($searchModel, 'base_year')->dropDownList(
+                    ArrayHelper::map(
+                        Allocation::find()->select('base_year')->distinct()->all(),
+                        'base_year',
+                        'base_year'
+                    ),
+                    ['prompt' => 'Select Base Year', 'class' => 'form-control']
+                ) ?>
+            </div>
+            <div class="col-md-4">
+                <br>
+                <?= Html::submitButton('Search', ['class' => 'btn btn-primary']) ?>
+                <?= Html::a('Reset', ['index'], ['class' => 'btn btn-outline-secondary']) ?>
+            </div>
+        </div>
+
+        <?php ActiveForm::end(); ?>
+    </div>
+    
+    
+    
+    
+    <style>
+        /* Search Form Container */
+.search-form {
+    background: #f8f9fa; /* Light gray background */
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+
+/* Form Fields */
+.search-form .form-group label {
+    font-weight: bold;
+    color: #333;
+    font-size: 0.95rem;
+}
+
+.search-form .form-control {
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    transition: border 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+}
+
+/* Input Fields Focus Effect */
+.search-form .form-control:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
+}
+
+/* Search Button */
+.search-form .btn-primary {
+    background: #007bff;
+    border: none;
+    padding: 8px 20px;
+    font-weight: bold;
+    border-radius: 5px;
+    transition: background 0.3s ease-in-out, transform 0.2s ease;
+}
+
+/* Search Button Hover */
+.search-form .btn-primary:hover {
+    background: #0056b3;
+    transform: scale(1.05);
+}
+
+/* Reset Button */
+.search-form .btn-outline-secondary {
+    border-color: #6c757d;
+    color: #6c757d;
+    padding: 8px 20px;
+    font-weight: bold;
+    border-radius: 5px;
+    transition: background 0.3s ease-in-out, transform 0.2s ease;
+}
+
+/* Reset Button Hover */
+.search-form .btn-outline-secondary:hover {
+    background: #6c757d;
+    color: #fff;
+    transform: scale(1.05);
+}
+
+/* Responsive Fix for Smaller Screens */
+@media (max-width: 768px) {
+    .search-form .row {
+        flex-direction: column;
+    }
+    .search-form .col-md-4 {
+        margin-bottom: 10px;
+    }
+    .search-form .btn {
+        width: 100%;
+    }
+}
+
+        
+    </style>
+<?php
+// Prepare data for the bar chart
+$financialYears = [];
+$allocations = [];
+
+foreach ($dataProvider->getModels() as $model) {
+    $financialYears[] = $model->financial_year;
+    $allocations[] = $model->ef_allocation; // Modify as needed
+}
+
+// Convert PHP arrays to JSON for JavaScript
+$financialYearsJson = json_encode($financialYears);
+$allocationsJson = json_encode($allocations);
+?>
+
+<!-- Include Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- Bar Chart Container -->
+<div class="row mt-4">
+    <div class="col-md-8 mx-auto">
+        <h3 class="text-center text-success fw-bold">Allocations Over Financial Years</h3>
+        <canvas id="allocationsBarChart"></canvas>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    var ctx = document.getElementById("allocationsBarChart").getContext("2d");
+
+    var chartData = {
+        labels: <?= $financialYearsJson ?>,
+        datasets: [{
+            label: "EF Allocation",
+            data: <?= $allocationsJson ?>,
+            backgroundColor: "#36a2eb", // Blue bars
+            borderColor: "#1e88e5",
+            borderWidth: 1
+        }]
+    };
+
+    new Chart(ctx, {
+        type: "bar",
+        data: chartData,
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return value.toLocaleString(); // Format numbers
+                        }
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    position: "top"
+                }
+            }
+        }
+    });
+});
+</script>
+
+    <!-- SUMMARY SECTION -->
+    <div class="row mt-4">
+        <h3 class="text-success fw-bold">Allocations Summary</h3>
+
+        <div class="col-md-12">
+            <table class="table table-bordered table-dark text-center">
+                <thead>
+                    <tr>
+                        <th>Total Audited Revenues</th>
+                        <th>Total EF Allocation</th>
+                        <th>Total EF Entitlement</th>
+                        <th>Total Amount (DORA)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="fw-bold">
+                        <td style="color:#ffffff !important;">
+                            <?= number_format(array_sum(array_column($dataProvider->getModels(), 'audited_revenues')), 2) ?>
+                        </td>
+                        <td style="color:#ffffff !important;">
+                            <?= number_format(array_sum(array_column($dataProvider->getModels(), 'ef_allocation')), 2) ?>
+                        </td>
+                        <td style="color:#ffffff !important;">
+                            <?= number_format(array_sum(array_column($dataProvider->getModels(), 'ef_entitlement')), 2) ?>
+                        </td>
+                        <td style="color:#ffffff !important;">
+                            <?= number_format(array_sum(array_column($dataProvider->getModels(), 'amount_reflected_dora')), 2) ?>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- TABLE OF ALLOCATIONS -->
+    <h2>Allocation Details</h2>
+    <?= GridView::widget([
+        'dataProvider' => $dataProvider,
+        'filterModel' => $searchModel,
+        'tableOptions' => ['class' => 'table table-bordered table-striped'],
+        'columns' => [
+            ['class' => 'yii\grid\SerialColumn'],
+
+            [
+                'attribute' => 'financial_year',
+                'label' => 'Financial Year',
+                'contentOptions' => ['class' => 'fw-bold text-success text-center'],
+            ],
+            [
+                'attribute' => 'base_year',
+                'label' => 'Base Year',
+                'contentOptions' => ['class' => 'fw-bold text-success text-center'],
+            ],
+            [
+                'attribute' => 'audited_revenues',
+                'label' => 'Audited Revenues',
+                'value' => fn($model) => number_format($model->audited_revenues, 2),
+                'contentOptions' => ['class' => 'fw-bold text-end text-success'],
+            ],
+            [
+                'attribute' => 'ef_allocation',
+                'label' => 'EF Allocation',
+                'value' => fn($model) => number_format($model->ef_allocation, 2),
+                'contentOptions' => ['class' => 'fw-bold text-end text-success'],
+            ],
+            [
+                'attribute' => 'ef_entitlement',
+                'label' => 'EF Entitlement',
+                'value' => fn($model) => number_format($model->ef_entitlement, 2),
+                'contentOptions' => ['class' => 'fw-bold text-end text-success'],
+            ],
+            [
+                'attribute' => 'amount_reflected_dora',
+                'label' => 'Amount Reflected (DORA)',
+                'value' => fn($model) => number_format($model->amount_reflected_dora, 2),
+                'contentOptions' => ['class' => 'fw-bold text-end text-success'],
+            ],
+            [
+                'class' => ActionColumn::className(),
+                'contentOptions' => ['class' => 'action-column'],
+                'urlCreator' => function ($action, Allocation $model, $key, $index, $column) {
+                    return Url::toRoute([$action, 'id' => $model->id]);
+                },
+            ],
+        ],
+    ]); ?>
+
+</div><?php
+
+
+
+/** @var yii\web\View $this */
+/** @var app\modules\ef\models\DisbursementSearch $searchModel */
+/** @var yii\data\ActiveDataProvider $dataProvider */
+
+$this->title = 'Disbursements for ' . $county;
+$this->params['breadcrumbs'][] = $this->title;
+?>
+<div class="disbursement-index">
+
+    <h3><?= Html::encode($this->title) ?></h3>
+    
+    <p>
+        
+        <?= Html::a('&nbsp;&nbsp;Back to Summaries', ['summaries'], ['class' => 'btn btn-danger mdi mdi-arrow-left', 'style' =>'float:right']) ?>
+    </p>
+
+    <?= GridView::widget([
+        'dataProvider' => $dataProvider,
+        //'filterModel' => $searchModel,
+        'columns' => [
+            ['class' => 'yii\grid\SerialColumn'],
+
+            //'id',
+            //'county',
+            'sector',
+            //'fiscal_year',
+            [
+                'attribute' => 'amount_disbursed',
+                'content' => function($data){
+                    return 'KES. '.number_format($data->amount_disbursed,2);
+                }
+            ],
+            //'user_id',
+            //'date_disbursed',
+            /*[
+                'class' => ActionColumn::className(),
+                'template'
+                'urlCreator' => function ($action, Disbursement $model, $key, $index, $column) {
+                    return Url::toRoute([$action, 'id' => $model->id]);
+                 }
+            ],*/
+        ],
+    ]); ?>
+
+
+</div>
+<?php
+$this->registerCss("
+    .disbursement-index {
+        background: #f8f9fa;
+        border-radius: 10px;
+    }
+    
+    .steel-table {
+        background-color: #f8f9fa;
+        border-collapse: collapse;
+        box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+    }
+    
+    .steel-table thead {
+        background: linear-gradient(to right, #3a3f44, #6c757d);
+        color: white;
+        font-weight: bold;
+        text-transform: uppercase;
+    }
+    
+    .steel-table th, .steel-table td {
+        padding: 12px;
+        text-align: left;
+        border: 1px solid #dee2e6;
+    }
+    
+    .steel-table tbody tr:nth-child(odd) {
+        background-color: #e9ecef;
+    }
+    
+    .steel-table tbody tr:hover {
+        background-color: #d6d8db;
+        transition: background 0.3s ease-in-out;
+    }
+
+    .btn-danger {
+        font-weight: bold;
+        transition: all 0.3s ease-in-out;
+    }
+
+    .btn-danger:hover {
+        filter: brightness(1.2);
+    }
+");
+?><?php
+
+use app\modules\ef\models\Disbursement;
+use yii\helpers\Html;
+use yii\helpers\ArrayHelper;
+use yii\widgets\ActiveForm;
+use yii\grid\GridView;
+use yii\data\ArrayDataProvider;
+
+/** @var yii\web\View $this */
+/** @var app\modules\ef\models\DisbursementSearch $searchModel */
+/** @var yii\data\ActiveDataProvider $dataProvider */
+
+$this->title = 'Sector Disbursement Analytics';
+$this->params['breadcrumbs'][] = $this->title;
+
+// Process Data for Charts
+$disbursements = $dataProvider->getModels();
+$countyData = [];
+$sectorData = [];
+$sectorBreakdown = [];
+$totalDisbursed = 0;
+
+// Group data by County & Sector
+foreach ($disbursements as $disbursement) {
+    $county = $disbursement->county;
+    $sector = $disbursement->sector;
+    $amount = $disbursement->amount_disbursed;
+
+    // Store total per county
+    if (!isset($countyData[$county])) {
+        $countyData[$county] = 0;
+        $sectorBreakdown[$county] = [];
+    }
+    $countyData[$county] += $amount;
+
+    // Store sector breakdown per county
+    if (!isset($sectorBreakdown[$county][$sector])) {
+        $sectorBreakdown[$county][$sector] = 0;
+    }
+    $sectorBreakdown[$county][$sector] += $amount;
+
+    // Store total per sector
+    if (!isset($sectorData[$sector])) {
+        $sectorData[$sector] = 0;
+    }
+    $sectorData[$sector] += $amount;
+
+    $totalDisbursed += $amount;
+}
+
+// Prepare Data for Donut Chart (Total per County)
+$countyLabels = array_keys($countyData);
+$countyValues = array_values($countyData);
+$countyColors = array_map(fn() => sprintf('#%06X', mt_rand(0, 0xFFFFFF)), $countyLabels);
+
+// Prepare Data for Stacked Bar Chart (Sectors Most Disbursed)
+$sectorLabels = array_keys($sectorData);
+$sectorValues = array_values($sectorData);
+$sectorColors = array_map(fn() => sprintf('#%06X', mt_rand(0, 0xFFFFFF)), $sectorLabels);
+
+// Convert Sector Breakdown into JSON for drill-down
+$sectorBreakdownJson = json_encode($sectorBreakdown);
+
+?>
+
+<div class="disbursement-index">
+    <h1 style="
+        font-size: 28px; 
+        font-weight: bold; 
+        text-transform: uppercase; 
+        background: linear-gradient(to right, #3a3f44, #6c757d); 
+        -webkit-background-clip: text; 
+        -webkit-text-fill-color: transparent; 
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2); 
+        letter-spacing: 1px; 
+        margin-bottom: 20px;">
+        <?= Html::encode($this->title) ?>
+    </h1>
+
+  <!-- Search Form -->
+<div class="search-form bg-white p-4 rounded shadow-sm">
+    <?php $form = ActiveForm::begin(['method' => 'get']); ?>
+    <div class="row align-items-end">
+        <div class="col-md-5">
+            <?= $form->field($searchModel, 'county')->dropDownList(
+                ArrayHelper::map(Disbursement::find()->select('county')->distinct()->all(), 'county', 'county'),
+                ['prompt' => 'Select County', 'class' => 'form-control custom-select']
+            ) ?>
+        </div>
+        <div class="col-md-5">
+            <?= $form->field($searchModel, 'sector')->dropDownList(
+                ArrayHelper::map(Disbursement::find()->select('sector')->distinct()->all(), 'sector', 'sector'),
+                ['prompt' => 'Select Sector', 'class' => 'form-control custom-select']
+            ) ?>
+        </div>
+        <div class="col-md-2">
+            <br>
+            <?= Html::submitButton('<i class="fas fa-search"></i> Search', [
+                'class' => 'btn btn-primary w-100 fw-bold',
+            ]) ?>
+        </div>
+    </div>
+    <?php ActiveForm::end(); ?>
+</div>
+
+
+
+
+    <!-- Donut Chart -->
+    <h2 class="mt-4 text-dark">Total Disbursement per County</h2>
+    <canvas id="countyDonutChart"></canvas>
+
+    <!-- Stacked Bar Chart -->
+    <h2 class="mt-4 text-dark">Top Funded Sectors</h2>
+    <canvas id="sectorBarChart"></canvas>
+
+    <!-- GridView Table -->
+    <h2 class="mt-4 text-dark">Disbursement Breakdown</h2>
+<?= GridView::widget([
+    'dataProvider' => new ArrayDataProvider([
+        'allModels' => array_map(fn($sector, $total) => ['sector' => $sector, 'total_disbursed' => $total], array_keys($sectorData), $sectorData),
+    ]),
+    'showFooter' => true, // Enables footer row
+    'tableOptions' => ['class' => 'table table-striped table-bordered'],
+    'columns' => [
+        ['class' => 'yii\grid\SerialColumn'],
+        [
+            'attribute' => 'sector',
+            'label' => 'Sector',
+            'contentOptions' => ['class' => 'fw-bold text-primary'],
+            'footer' => '<strong>Total for the Sectors per County</strong>', // Footer label
+            'footerOptions' => ['class' => 'fw-bold text-dark text-end'],
+        ],
+        [
+            'attribute' => 'total_disbursed',
+            'label' => 'Total Disbursed',
+            'value' => fn($model) => 'KES ' . number_format($model['total_disbursed'], 2),
+            'contentOptions' => ['class' => 'fw-bold text-end text-success'],
+            'footer' => '<strong>KES ' . number_format(array_sum($sectorData), 2) . '</strong>', // Total sum in footer
+            'footerOptions' => ['class' => 'fw-bold text-end text-success'],
+        ],
+    ],
+]); ?>
+
+</div>
+
+<?php
+// Convert Data to JSON for JS
+$countyLabelsJson = json_encode($countyLabels);
+$countyValuesJson = json_encode($countyValues);
+$countyColorsJson = json_encode($countyColors);
+
+$sectorLabelsJson = json_encode($sectorLabels);
+$sectorValuesJson = json_encode($sectorValues);
+$sectorColorsJson = json_encode($sectorColors);
+
+// JS for Charts with Drill-down
+$this->registerJs(<<<JS
+        
+        
+        
+    var sectorBreakdown = $sectorBreakdownJson;
+    var countyChart;
+    
+    function loadCountyChart(labels, values, colors) {
+        var ctx = document.getElementById('countyDonutChart').getContext('2d');
+        if (countyChart) countyChart.destroy();
+        countyChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: values,
+                    backgroundColor: colors,
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: 'right' },
+                    tooltip: {
+                        callbacks: { label: tooltipItem => tooltipItem.label + ': KES ' + tooltipItem.raw.toLocaleString() }
+                    }
+                },
+                onClick: function(evt, elements) {
+                    if (elements.length > 0) {
+                        var index = elements[0].index;
+                        var selectedCounty = labels[index];
+                        if (sectorBreakdown[selectedCounty]) {
+                            var sectorLabels = Object.keys(sectorBreakdown[selectedCounty]);
+                            var sectorValues = Object.values(sectorBreakdown[selectedCounty]);
+                            loadCountyChart(sectorLabels, sectorValues, sectorColorsJson);
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Load Initial Donut Chart
+    loadCountyChart($countyLabelsJson, $countyValuesJson, $countyColorsJson);
+
+    // Stacked Bar Chart (Top Funded Sectors)
+    var ctx2 = document.getElementById('sectorBarChart').getContext('2d');
+    new Chart(ctx2, {
+        type: 'bar',
+        data: {
+            labels: $sectorLabelsJson,
+            datasets: [{
+                label: 'Total Disbursed',
+                data: $sectorValuesJson,
+                backgroundColor: $sectorColorsJson,
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: { x: { stacked: true }, y: { stacked: true, ticks: { callback: value => 'KES ' + value.toLocaleString() } } },
+            plugins: { legend: { display: false } }
+        }
+    });
+JS);
+?><?php
+use yii\helpers\Html;
+use yii\helpers\Url;
+use yii\widgets\ActiveForm;
+use yii\helpers\ArrayHelper;
+use app\modules\ef\models\Disbursement;
+$this->title = 'Disbursement Analytics & Summaries';
+?>
+
+<!-- Poppins Font -->
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
+<h3 class="mb-4 text-center text-uppercase fw-bold text-primary"><?= Html::encode($this->title) ?></h3>
+
+
+<!-- Filter Form -->
+<div class="search-form card shadow-sm p-4 mb-4">
+    <?php $form = ActiveForm::begin([
+        'action' => ['index'],
+        'method' => 'get',
+    ]); ?>
+
+    <div class="row">
+        <div class="col-md-4">
+            <?= $form->field($searchModel, 'county')->dropDownList(
+                ArrayHelper::map(
+                    Disbursement::find()->select('county')->distinct()->all(),
+                    'county',
+                    'county'
+                ),
+                ['prompt' => 'Select County', 'class' => 'form-control', 'id' => 'countyFilter']
+            ) ?>
+        </div>
+     
+        <div class="col-md-4">
+            <br>
+            <?= Html::submitButton('Search', ['class' => 'btn btn-primary']) ?>
+            <?= Html::a('Reset', ['index'], ['class' => 'btn btn-outline-secondary']) ?>
+        </div>
+    </div>
+
+    <?php ActiveForm::end(); ?>
+</div>
+
+<!-- Disbursement Analytics Histogram -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow-lg border-0 mb-5">
+            <div class="card-body">
+                <h5 class="card-title text-primary"><i class="bi bi-bar-chart"></i> Disbursement Over Time</h5>
+                <canvas id="disbursementChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+<h3 style="
+    font-size: 28px; 
+    font-weight: bold; 
+    text-transform: uppercase; 
+    background: linear-gradient(to right, #3a3f44, #6c757d); 
+    -webkit-background-clip: text; 
+    -webkit-text-fill-color: transparent; 
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2); 
+    letter-spacing: 1px; 
+    margin-bottom: 20px;">
+    <?= Html::encode($this->title) ?>
+</h3>
+
+<!-- Disbursement Summary Cards -->
+<div class="row" id="countyCards">
+    <?php foreach($total_per_county as $tpc): 
+        $url = Url::to(['/ef/disbursement/per-county', 'cnt'=> $tpc->county]);
+        $progress = min(100, ($tpc->amount_disbursed / 10000000) * 100);
+    ?>
+    <div class="col-xl-4 col-md-6 col-sm-12 mb-4 county-card" data-county="<?= Html::encode($tpc->county) ?>">
+        <a href="<?= $url ?>" class="text-decoration-none">
+            <div class="card shadow-lg border-0 rounded-lg transition-hover">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="text-primary fw-bold"><?= Html::encode($tpc->county) ?></h5>
+                            <p class="mb-2 text-muted small">
+                                <i class="bi bi-cash-stack"></i> Total Disbursed: 
+                                <strong class="text-success">KSH <?= number_format($tpc->amount_disbursed, 2) ?></strong>
+                            </p>
+                        </div>
+                        <div>
+                            <div class="icon-circle bg-success text-white">
+                                <i class="bi bi-graph-up-arrow"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Progress Bar -->
+                    <div class="progress mt-3" style="height: 7px;">
+                        <div class="progress-bar bg-gradient-success" role="progressbar" 
+                             style="width: <?= $progress ?>%;" 
+                             aria-valuenow="<?= $progress ?>" aria-valuemin="0" aria-valuemax="100">
+                        </div>
+                    </div>
+
+                    <div class="small text-muted mt-2">
+                        <i class="bi bi-info-circle" data-bs-toggle="tooltip" data-bs-placement="top" 
+                           title="Estimated Fund Usage based on 10M threshold"></i>
+                        <span class="ms-1"><?= round($progress, 2) ?>% utilized</span>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+    <?php endforeach; ?>
+</div>
+
+<!-- Chart.js with Sorting -->
+<?php
+$countyNames = json_encode(array_column($total_per_county, 'county'));
+$disbursedAmounts = json_encode(array_map(fn($amt) => number_format($amt, 2, '.', ''), array_column($total_per_county, 'amount_disbursed')));
+
+$script = <<< JS
+        
+  $(function () {
+    $('[data-bs-toggle="tooltip"]').tooltip();
+    
+    var ctx = document.getElementById('disbursementChart').getContext('2d');
+    
+    // Generate a dynamic color for each county
+    var dynamicColors = function () {
+        var r = Math.floor(Math.random() * 255);
+        var g = Math.floor(Math.random() * 255);
+        var b = Math.floor(Math.random() * 255);
+        return 'rgba(' + r + ', ' + g + ', ' + b + ', 0.7)';
+    };
+
+    var barColors = Array($countyNames.length).fill().map(dynamicColors);
+
+    var disbursementChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: $countyNames,
+            datasets: [{
+                label: 'Total Amount Disbursed (KSH)',
+                data: $disbursedAmounts,
+                backgroundColor: barColors,
+                borderColor: barColors.map(color => color.replace('0.7', '1')),
+                borderWidth: 1,
+                hoverBackgroundColor: 'rgba(255, 99, 132, 0.8)',
+                hoverBorderColor: 'rgba(255, 99, 132, 1)',
+   
+
+</div> create the best dashboard >>>index make it best with all content from different looks make the dashboard advanced share full code with analytics

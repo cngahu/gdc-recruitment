@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Clustered Project Report</title>
+
+  <!-- Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --font-family-base: 'Montserrat', sans-serif;
+      --primary-color: #157347;
+      --primary-dark: #125f33;
+      --secondary-color: #28a745;
+      --accent-color: #0dcaf0;
+      --warning-color: #ffc107;
+      --header-gradient: linear-gradient(135deg, #157347, #125f33);
+      --summary-bg: #fff8e1;
+      --toc-bg: #e1f5fe;
+      --cluster-bg: #dcedc8;
+      --analysis-bg: #fff3cd;
+      --body-bg: #f9fafb;
+      --text-color: #2c3e50;
+      --light-gray: #f8f9fa;
+      --border-color: #ccc;
+      --box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    html, body { margin: 0; padding: 0; font-family: var(--font-family-base); background: var(--body-bg); }
+    body {
+      margin: 25px;
+      color: var(--text-color);
+      font-size: 13px;
+      line-height: 1.6;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    header, footer {
+      position: fixed;
+      width: 100%;
+      left: 0;
+      text-align: center;
+      z-index: 9999;
+      color: white;
+      background: var(--header-gradient);
+    }
+
+    header { top: 0; padding: 12px; font-size: 18px; }
+    footer { bottom: 0; padding: 10px; font-size: 12px; }
+    footer:after { content: "Page " counter(page) " of " counter(pages); }
+
+    .print-btn {
+      display: block;
+      width: 150px;
+      margin: 20px auto;
+      padding: 12px;
+      background-color: var(--primary-color);
+      color: #fff;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      border: none;
+      box-shadow: var(--box-shadow);
+    }
+
+    .header-content {
+      background: var(--primary-color);
+      color: white;
+      padding: 25px;
+      text-align: center;
+      border-radius: 8px;
+      box-shadow: var(--box-shadow);
+      margin-bottom: 70px;
+    }
+
+    .section, .summary-section, .toc-section, .analysis-section {
+      background: white;
+      margin-bottom: 30px;
+      padding: 20px;
+      border-radius: 8px;
+      border: 2px solid var(--border-color);
+      box-shadow: var(--box-shadow);
+    }
+
+    .summary-section { background: var(--summary-bg); border-left: 5px solid var(--primary-color); }
+    .toc-section { background: var(--toc-bg); border-left: 5px solid var(--secondary-color); }
+    .analysis-section { background: var(--analysis-bg); border-left: 6px solid var(--warning-color); }
+
+    .project-counter { font-weight: bold; }
+    .output-title {
+      margin-top: 14px;
+      padding: 10px 15px;
+      background: #e8f6f0;
+      border-left: 5px solid var(--secondary-color);
+      font-weight: 600;
+      border-radius: 4px;
+    }
+
+    .indicator-title {
+      margin: 10px 0 8px;
+      padding: 10px 15px;
+      background: #f0faff;
+      border-left: 4px solid var(--accent-color);
+      font-size: 13px;
+      border-radius: 4px;
+    }
+
+    .cluster-heading {
+      background: var(--cluster-bg);
+      border-left: 6px solid var(--primary-color);
+      padding: 14px 20px;
+      font-size: 18px;
+      margin-top: 40px;
+      margin-bottom: 20px;
+      font-weight: 600;
+      border-radius: 4px;
+      border: 1px solid var(--border-color);
+    }
+
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { border: 1px solid var(--border-color); padding: 8px; text-align: left; }
+    th { background: var(--light-gray); }
+
+    .status-reported { color: green; font-weight: bold; }
+    .status-missing { color: red; }
+    .no-data { font-style: italic; color: gray; }
+
+    @media print {
+      .print-btn, .footer-screen { display: none; }
+      body { margin-top: 120px; margin-bottom: 100px; }
+      body:before {
+        content: "CONFIDENTIAL";
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) rotate(-45deg);
+        font-size: 120px;
+        color: rgba(0, 0, 0, 0.08);
+        z-index: -1;
+      }
+    }
+  </style>
+
+  <script>
+    function printReport() { window.print(); }
+  </script>
+</head>
+
+<body>
+
+<header>National Government Dashboard System (NGDS) - Clustered Project Report</header>
+<footer>Report generated on: {{ \Carbon\Carbon::now()->format('l, F j, Y g:i A') }}</footer>
+
+<div class="header-content">
+  <h1>National Government Dashboard System (NGDS)</h1>
+  <h2>Clustered Project ➤ Output ➤ Indicator ➤ Target Report</h2>
+</div>
+
+<button class="print-btn" onclick="printReport()">Print Report</button>
+
+@php
+  $totalProjects = $projects->count();
+  $totalEstimatedCost = $projects->sum('estimated_cost');
+  $totalOutputs = $projects->sum(fn($p) => $p->outputs->count());
+  $totalIndicators = $projects->sum(fn($p) => $p->outputs->sum(fn($o) => $o->indicators->count()));
+  $totalTargets = $projects->sum(fn($p) => $p->outputs->sum(fn($o) => $o->indicators->sum(fn($i) => $i->targets->count())));
+  $clusters = $projects->groupBy(fn($p) => optional($p->cluster)->name ?? 'Unclustered');
+  $totalClusters = $clusters->count();
+@endphp
+
+<div class="summary-section">
+  <h3>Overall Summary</h3>
+  <table>
+    <tr><th>Total Projects</th><td>{{ $totalProjects }}</td></tr>
+    <tr><th>Total Estimated Cost</th><td>KES {{ number_format($totalEstimatedCost, 2) }}</td></tr>
+    <tr><th>Total Clusters</th><td>{{ $totalClusters }}</td></tr>
+    <tr><th>Total Outputs</th><td>{{ $totalOutputs }}</td></tr>
+    <tr><th>Total Indicators</th><td>{{ $totalIndicators }}</td></tr>
+    <tr><th>Total Targets</th><td>{{ $totalTargets }}</td></tr>
+  </table>
+</div>
+
+<div class="toc-section">
+  <h3>Table of Contents</h3>
+  @foreach($clusters as $clusterName => $clusterProjects)
+    <strong>{{ $clusterName }}</strong> ({{ $clusterProjects->count() }} projects)
+    <ul>
+      @foreach($clusterProjects as $i => $p)
+        <li>Project {{ $i + 1 }}: {{ $p->project_name }}</li>
+      @endforeach
+    </ul>
+  @endforeach
+</div>
+
+<!-- Indicators Summary Section -->
+<div class="section">
+    <h3 class="project-counter">Indicators Summary</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Project</th>
+                <th>Output</th>
+                <th>Indicator</th>
+                <th>Unit</th>
+                <th>Baseline</th>
+            </tr>
+        </thead>
+        <tbody>
+            @php $counter = 1; @endphp
+            @foreach($projects as $project)
+                @foreach($project->outputs as $output)
+                    @foreach($output->indicators as $indicator)
+                        <tr>
+                            <td>{{ $counter++ }}</td>
+                            <td>{{ $project->project_name }}</td>
+                            <td>{{ $output->name }}</td>
+                            <td>{{ $indicator->name }}</td>
+                            <td>{{ $indicator->unit_of_measure }}</td>
+                            <td>{{ $indicator->baseline_value }} ({{ $indicator->baseline_year }})</td>
+                        </tr>
+                    @endforeach
+                @endforeach
+            @endforeach
+        </tbody>
+    </table>
+</div>
+
+@foreach($clusters as $clusterName => $clusterProjects)
+  <div class="cluster-heading">Cluster: {{ $clusterName }}</div>
+  @foreach($clusterProjects as $index => $project)
+    <div class="section">
+      <h3 class="project-counter">📌 Project {{ $index + 1 }}: {{ $project->project_name }}</h3>
+      <table>
+        <tr><th>State Department</th><td>{{ $project->stateDepartment->name ?? 'N/A' }}</td></tr>
+        <tr><th>Objective</th><td>{{ $project->objective ?? '--' }}</td></tr>
+        <tr><th>Total Project Cost</th><td>KES {{ number_format($project->estimated_cost, 2) }}</td></tr>
+        <tr><th>Planned Duration</th>
+          <td>
+            {{ optional($project->planned_start_date)->format('M Y') ?? '-' }} to 
+            {{ optional($project->planned_end_date)->format('M Y') ?? '-' }}
+          </td>
+        </tr>
+    
+      </table>
+
+      @forelse($project->outputs as $output)
+        <div class="output-title">Output: {{ $output->name }}</div>
+
+        @forelse($output->indicators as $indicator)
+          @php
+            $filteredTargets = $indicator->targets->filter(function($t) {
+              $year = $t->fy->year ?? null;
+              $quarter = $t->quarter->quarter ?? null;
+              return ($year === '2023/2024' && $quarter === 'Q4') ||
+                     ($year === '2024/2025' && in_array($quarter, ['Q1', 'Q2']));
+            });
+
+            $uniqueTargets = $filteredTargets->unique(fn($t) => ($t->fy->year ?? '') . '-' . ($t->quarter->quarter ?? ''));
+            $groupedTargets = $uniqueTargets->groupBy(fn($t) => $t->fy->year ?? 'N/A');
+          @endphp
+
+         <div class="indicator-title">
+                        <!-- Improved display of the Indicator name -->
+                        <strong>Indicator:</strong> {{ $indicator->name }}<br>
+                        <small>
+                            <strong>Unit:</strong> {{ $indicator->unit_of_measure }} |
+                            <strong>Baseline:</strong> {{ $indicator->baseline_value ?? '-' }}
+                            ({{ $indicator->baseline_year ?? '-' }})
+                        </small>
+                    </div>
+
+          @if($groupedTargets->isNotEmpty())
+            @foreach($groupedTargets as $year => $targets)
+              <h4>Financial Year: {{ $year }}</h4>
+              <table>
+                <thead>
+                  <tr><th>#</th><th>Quarter</th><th>Target</th><th>Status</th><th>Spent</th><th>Comment</th></tr>
+                </thead>
+                <tbody>
+                  @foreach($targets as $i => $target)
+                    @php $report = $target->reports->first(); @endphp
+                    <tr>
+                      <td>{{ $i + 1 }}</td>
+                      <td>{{ $target->quarter->quarter ?? 'N/A' }}</td>
+                      <td>{{ $target->target_value }}</td>
+                      <td class="{{ $report ? 'status-reported' : 'status-missing' }}">
+                        {{ $report->progress_status ?? '❌ Not Reported' }}
+                      </td>
+                      <td>{{ $report ? 'KES ' . number_format($report->amount_spent, 2) : '-' }}</td>
+                      <td>{{ $report->comments ?? '-' }}</td>
+                    </tr>
+                  @endforeach
+                </tbody>
+              </table>
+            @endforeach
+          @else
+            <p class="no-data">No targets available for this indicator.</p>
+          @endif
+        @empty
+          <p class="no-data">No indicators found for this output.</p>
+        @endforelse
+      @empty
+        <p class="no-data">No outputs defined for this project.</p>
+      @endforelse
+    </div>
+  @endforeach
+@endforeach
+
+<div class="analysis-section">
+  <h3 class="analysis-title">Further Analysis</h3>
+  <ul>
+    <li><strong>Reporting Efficiency:</strong> Some indicators were not reported.</li>
+    <li><strong>Cost Distribution:</strong> Budget allocation varies by cluster.</li>
+    <li><strong>Cluster Performance:</strong> Performance varies by region.</li>
+    <li><strong>Planning:</strong> Use this for milestone tracking and adjustments.</li>
+  </ul>
+</div>
+
+<div class="footer-screen">
+  Report generated on: {{ \Carbon\Carbon::now()->format('l, F j, Y g:i A') }}
+</div>
+
+</body>
+</html>

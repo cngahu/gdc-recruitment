@@ -1,0 +1,361 @@
+@php
+    $user = \Illuminate\Support\Facades\Auth::user();
+@endphp
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+
+:root {
+  --primary: #16a34a;
+  --primary-dark: #15803d;
+  --white: #ffffff;
+  --gray: #9ca3af;
+  --text-color: #1e293b;
+  --hover-bg: #f3fcf7;
+  --active-bg: #e6f6ee;
+  --blue-bg: #e0edff;
+  --blue: #3b82f6;
+  --border-color: #e2e8f0;
+  --indigo: #6366f1;
+}
+
+/* Base Styles */
+body {
+  font-family: 'Poppins', sans-serif;
+  color: var(--text-color);
+  background-color: var(--white);
+}
+
+.sidebar-wrapper {
+  background-color: var(--white);
+  width: 260px;
+  min-height: 100vh;
+  border-right: 1px solid var(--border-color);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+  overflow-y: auto;
+}
+
+/* Header */
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: var(--primary);
+  padding: 16px 20px;
+  color: var(--white);
+}
+
+.logo-icon {
+  width: 30px;
+  height: 30px;
+  margin-right: 8px;
+}
+
+.logo-text {
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.toggle-icon i {
+  font-size: 20px;
+  color: var(--white);
+}
+
+/* Navigation Base */
+.metismenu {
+  list-style: none;
+  margin: 0;
+  padding: 15px 0;
+}
+
+.metismenu li {
+  margin-bottom: 4px;
+}
+
+.metismenu li a {
+  display: flex;
+  align-items: center;
+  padding: 12px 22px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-color);
+  border-radius: 8px;
+  text-decoration: none;
+  transition: all 0.25s ease;
+}
+
+.metismenu li a:hover {
+  background-color: var(--hover-bg);
+  color: var(--primary-dark);
+}
+
+.metismenu li a.active {
+  background-color: var(--blue-bg);
+  color: var(--blue);
+  font-weight: 600;
+}
+
+/* Icons */
+.parent-icon {
+  font-size: 18px;
+  margin-right: 12px;
+  color: var(--primary);
+}
+
+.metismenu li a:hover .parent-icon,
+.metismenu li a.active .parent-icon {
+  color: var(--primary-dark);
+}
+
+/* Submenu Group Titles */
+.submenu-title {
+  background-color: var(--primary);
+  color: var(--white);
+  font-size: 12px;
+  text-transform: uppercase;
+  font-weight: 600;
+  padding: 12px 20px 10px 26px;
+  letter-spacing: 0.5px;
+  position: relative;
+  margin-top: 14px;
+  border-radius: 6px;
+}
+
+.submenu-title::before {
+  content: '';
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 14px;
+  width: 3px;
+  background-color: var(--indigo);
+  border-radius: 2px;
+}
+
+/* Section Labels (if still using) */
+.menu-label {
+  padding: 12px 22px 6px;
+  font-size: 11px;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--gray);
+  letter-spacing: 0.5px;
+}
+
+/* Submenus */
+.metismenu li ul {
+  padding-left: 20px;
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  background-color: #f9f9f9;
+  border-left: 2px solid var(--primary);
+  border-radius: 4px;
+  transition: max-height 0.3s ease, opacity 0.2s ease;
+}
+
+.metismenu li.open > ul {
+  max-height: 500px;
+  opacity: 1;
+}
+.menu-label {
+  background-color: var(--primary);   /* Emerald Green */
+  color: var(--white);                /* White Text */
+  font-size: 12px;
+  text-transform: uppercase;
+  font-weight: 600;
+  padding: 12px 20px 10px 26px;
+  letter-spacing: 0.5px;
+  position: relative;
+  margin-top: 14px;
+  border-radius: 6px;
+}
+
+/* Indigo vertical bar (same as .submenu-title) */
+.menu-label::before {
+  content: '';
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 14px;
+  width: 3px;
+  background-color: var(--indigo);
+  border-radius: 2px;
+}
+
+.metismenu li ul li a {
+  padding: 10px 20px;
+  font-size: 14px;
+  border-radius: 6px;
+}
+
+.metismenu li ul li a:hover {
+  background-color: var(--hover-bg);
+  color: var(--primary-dark);
+}
+
+/* Scrollbar */
+.sidebar-wrapper::-webkit-scrollbar {
+  width: 6px;
+}
+.sidebar-wrapper::-webkit-scrollbar-thumb {
+  background-color: var(--primary);
+  border-radius: 4px;
+}
+
+
+</style>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+      // For each menu link that should toggle a submenu:
+      document.querySelectorAll(".has-arrow").forEach(function (menuLink) {
+          menuLink.addEventListener("click", function (e) {
+              e.preventDefault(); // Prevent default link behavior
+              // Toggle the 'open' class on the parent <li> element:
+              menuLink.parentElement.classList.toggle("open");
+          });
+      });
+  });
+</script>
+
+<div class="sidebar-wrapper" data-simplebar="true">
+    <!-- Sidebar Header -->
+    <div class="sidebar-header d-flex align-items-center justify-content-between px-3 py-2">
+	
+        <div class="d-flex align-items-center">
+           <div>
+            <img src="{{ asset('adminbackend/assets/images/logo-icon.png') }}" class="logo-icon" alt="logo icon">
+        </div>
+            <h4 class="logo-text text-white mb-0">NGDS</h4>
+        </div>
+        <div class="toggle-icon">
+            <i class='bx bx-arrow-to-left'></i>
+        </div>
+    </div>
+
+    <!-- Sidebar Navigation -->
+    <ul class="metismenu" id="menu">
+
+ <!-- 🔹 Dashboard -->
+    <!-- Instead of route('index'), use the actual route name -->
+<a href="{{ route('backend.dashboard') }}">
+    <div class="parent-icon">
+        <i class="bx bx-home"></i>
+    </div>
+    <div class="menu-title">Dashboard</div>
+</a>
+
+
+
+        <!-- 🔹 Project Management -->
+        @if($user->hasAnyRole(['Superadmin', 'BusinessAnalyst']))
+        <li class="menu-label">Projects Management</li>
+
+     
+        <li>
+            <a href="{{ route('projects.index') }}">
+                <div class="parent-icon"><i class='bx bx-briefcase'></i></div>
+                <div class="menu-title">Programmes & Projects</div>
+            </a>
+        </li>
+        <li>
+            <a href="{{ route('outputs.mainindex') }}">
+                <div class="parent-icon"><i class='bx bx-export'></i></div>
+                <div class="menu-title">Outputs</div>
+            </a>
+        </li>
+
+        <!-- 📈 Monitoring & Evaluation -->
+        <li class="submenu-title">Monitoring & Evaluation</li>
+        <li>
+            <a href="{{ route('indicators.mainindex') }}">
+                <div class="parent-icon"><i class='bx bx-bar-chart'></i></div>
+                <div class="menu-title">Indicators</div>
+            </a>
+        </li>
+        <li>
+            <a href="{{ route('targets.mainindex') }}">
+                <div class="parent-icon"><i class='bx bx-bullseye'></i></div>
+                <div class="menu-title">Targets</div>
+            </a>
+        </li>
+        <li>
+            <a href="{{ route('targets.dashboardb') }}">
+                <div class="parent-icon"><i class='bx bx-target-lock'></i></div>
+                <div class="menu-title">2023/24 Targets</div>
+            </a>
+        </li>
+ <!-- 📊 Reporting -->
+        <li class="submenu-title">Reporting</li>
+        <li>
+            <a href="{{ route('backend.reporting.index') }}">
+    <div class="parent-icon"><i class='bx bx-line-chart'></i></div>
+    <div class="menu-title">Reporting Tracking</div>
+</a>
+        </li>
+        <li>
+            <a href="{{ route('reporting.fy') }}">
+                <div class="parent-icon"><i class='bx bx-calendar-edit'></i></div>
+                <div class="menu-title">Reporting by FY</div>
+            </a>
+        </li>
+       {{--
+<!-- 📝 Reports -->
+<li class="submenu-title">Reports</li>
+<li>
+    <a href="{{ route('reports.create') }}">
+        <div class="parent-icon"><i class='bx bx-plus-circle'></i></div>
+        <div class="menu-title">Add New Report</div>
+    </a>
+</li>
+<li>
+    <a href="{{ route('reports.index') }}">
+        <div class="parent-icon"><i class='bx bx-list-ul'></i></div>
+        <div class="menu-title">All Reports</div>
+    </a>
+</li>
+--}}
+
+        @endif
+
+        <!-- 🔐 User Management -->
+        @if($user->hasRole('Superadmin'))
+        <li class="menu-label">User Management</li>
+        <li>
+            <a href="{{ route('user.index') }}">
+                <div class="parent-icon"><i class='bx bx-user'></i></div>
+                <div class="menu-title">Registered Users</div>
+            </a>
+        </li>
+
+        <!-- 🛡️ Roles & Permissions -->
+        <li class="menu-label">Roles & Permissions</li>
+        <li>
+            <a class="has-arrow" href="javascript:;">
+                <div class="parent-icon"><i class='bx bx-lock-alt'></i></div>
+                <div class="menu-title">Role & Permission</div>
+            </a>
+            <ul>
+                <li><a href="{{ route('all.permission') }}"><i class="bx bx-key"></i>All Permission</a></li>
+                <li><a href="{{ route('all.roles') }}"><i class="bx bx-shield-quarter"></i>All Roles</a></li>
+                <li><a href="{{ route('add.roles.permission') }}"><i class="bx bx-user-plus"></i>Assign Roles</a></li>
+                <li><a href="{{ route('all.roles.permission') }}"><i class="bx bx-list-check"></i>Role Assignments</a></li>
+            </ul>
+        </li>
+
+        <!-- ⚙️ System Configurations -->
+        <li class="menu-label">System Configurations</li>
+        <li><a href="{{ route('all.ministry') }}"><div class="parent-icon"><i class='bx bx-building'></i></div><div class="menu-title">Ministries</div></a></li>
+        <li><a href="{{ route('all.state_departments') }}"><div class="parent-icon"><i class='bx bx-sitemap'></i></div><div class="menu-title">State Departments</div></a></li>
+        <li><a href="{{ route('institutions.index') }}"><div class="parent-icon"><i class='bx bx-bank'></i></div><div class="menu-title">Institutions</div></a></li>
+        <li><a href="{{ route('designations.index') }}"><div class="parent-icon"><i class='bx bx-id-card'></i></div><div class="menu-title">Designations</div></a></li>
+        <li><a href="{{ route('clusters.index') }}"><div class="parent-icon"><i class='bx bx-group'></i></div><div class="menu-title">Clusters</div></a></li>
+        <li><a href="{{ route('fys.index') }}"><div class="parent-icon"><i class='bx bx-calendar'></i></div><div class="menu-title">Financial Years</div></a></li>
+        <li><a href="{{ route('regions.index') }}"><div class="parent-icon"><i class='bx bx-world'></i></div><div class="menu-title">Regions</div></a></li>
+        <li><a href="{{ route('county.index') }}"><div class="parent-icon"><i class='bx bx-map'></i></div><div class="menu-title">Counties</div></a></li>
+        <li><a href="{{ route('subcounty.index') }}"><div class="parent-icon"><i class='bx bx-map-pin'></i></div><div class="menu-title">Sub-Counties</div></a></li>
+        @endif
+    </ul>
+</div>

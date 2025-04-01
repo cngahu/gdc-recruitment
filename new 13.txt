@@ -1,0 +1,811 @@
+@php
+    use Illuminate\Support\Facades\DB;
+    use Illuminate\Support\Facades\Auth;
+    use App\Models\User;
+
+    // Example query pulling external vacancies only
+    $vacancies = DB::table('vacancies')
+        ->join('recruitments', 'vacancies.Recruitmentid', '=', 'recruitments.id')
+        ->where('vacancies.job_type', 'External')
+        ->where('recruitments.closeDate', '>=', today())
+        ->select('vacancies.*', 'recruitments.closeDate as closedate')
+        ->get();
+@endphp
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>GDC Recruitment System</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta content="A fully featured recruitment system for GDC" name="description" />
+    <meta content="Coderthemes" name="author" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
+    <!-- Poppins font import -->
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap CSS (v5.x) -->
+    <link href="{{ asset('backend/assets/css/bootstrap.min.css') }}" rel="stylesheet" type="text/css" />
+
+    <!-- App CSS -->
+    <link href="{{ asset('backend/assets/css/app.min.css') }}" rel="stylesheet" type="text/css" id="app-style" />
+    <!-- Icons CSS -->
+    <link href="{{ asset('backend/assets/css/icons.min.css') }}" rel="stylesheet" type="text/css" />
+
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="{{ asset('backend/assets/images/favicon.ico') }}">
+
+    <!-- Accessibility widget -->
+    <script src="https://cdn.userway.org/widget.js" data-account="mz58FyckjC"></script>
+
+    <style>
+        body {
+            background: linear-gradient(45deg, #007A33, #A7A8AA);
+            background-size: cover;
+            font-family: 'Poppins', sans-serif;
+        }
+        /* Custom button styles */
+        .custom-color-btn {
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        .custom-color-btn:hover {
+            opacity: 0.85;
+        }
+        /* Custom radius classes */
+        .radius-30 {
+            border-radius: 30px;
+        }
+        .radius-50 {
+            border-radius: 50px;
+        }
+        /* Card styling for a subtle shadow and lighter background */
+        .card.bg-pattern {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        body {
+    background: linear-gradient(45deg, #007A33, #A7A8AA);
+    background-size: cover;
+    font-family: 'Poppins', sans-serif;
+}
+
+/* Custom button styles */
+.custom-color-btn {
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+.custom-color-btn:hover {
+    opacity: 0.85;
+}
+
+/* Custom radius classes */
+.radius-30 {
+    border-radius: 30px;
+}
+.radius-50 {
+    border-radius: 50px;
+}
+
+/* Card styling with a subtle shadow and lighter background */
+.card.bg-pattern {
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 15px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Header adjustments */
+.header h4 {
+    color: #333;
+    font-weight: 700;
+}
+
+/* Responsive table container styling */
+.table-container {
+    overflow-x: auto;
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+.table-container table {
+    margin: 0;
+}
+
+/* Tooltip custom style */
+.tooltip-inner {
+    background-color: #333333 !important;
+    color: #ffffff !important;
+}
+
+/* Footer link styling */
+.footer a {
+    text-decoration: none;
+    font-weight: bold;
+}
+
+        /* Header adjustments */
+        .header h4 {
+            color: #333;
+            font-weight: 700;
+        }
+        /* Responsive table container styling */
+        .table-container {
+            overflow-x: auto;
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+        .table-container table {
+            margin: 0;
+        }
+        /* Tooltip custom style */
+        .tooltip-inner {
+            background-color: #333333 !important;
+            color: #ffffff !important;
+        }
+        /* Footer link styling */
+        .footer a {
+            text-decoration: none;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+
+<!-- Main content -->
+<div class="account-pages mt-5 mb-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <!-- You can adjust the column size as needed -->
+            <div class="col-md-12">
+                <div class="card bg-pattern">
+                    <div class="card-body p-4">
+                        <!-- Header row with logos and login/register buttons -->
+                        <div class="header">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <a href="https://www.gdc.co.ke/" target="_blank">
+                                        <img src="{{ asset('backend/assets/images/logo-dark.png') }}" 
+                                             width="100%" alt="GDC Logo">
+                                    </a>
+                                </div>
+                                <div class="col-md-5">
+                                    <br>
+                                    <!-- Title or tagline here if needed -->
+                                    <br>
+                                </div>
+                                <div class="col-md-4 text-end">
+                                    <br>
+                                    @if (Route::has('login'))
+                                        @auth
+                                            @php
+                                                $user = User::where('id', Auth::id())->first();
+                                            @endphp
+                                            @if($user && $user->role == "admin")
+                                                <a href="{{ route('admin.dashboard') }}" 
+                                                   class="btn btn-info custom-color-btn px-3 radius-30">
+                                                   Dashboard
+                                                </a>
+                                            @elseif($user && $user->role == "applicant")
+                                                <a href="{{ route('applicant.dashboard') }}" 
+                                                   class="btn btn-info custom-color-btn px-3 radius-30">
+                                                   Dashboard
+                                                </a>
+                                            @elseif($user && $user->role == "panelist")
+                                                <a href="{{ route('panelist.dashboard') }}" 
+                                                   class="btn btn-info custom-color-btn px-3 radius-30">
+                                                   Dashboard
+                                                </a>
+                                            @endif
+                                        @else
+                                            <a href="{{ route('login') }}" 
+                                               class="btn custom-color-btn px-3 radius-50" 
+                                               style="background-color: #057833; color: whitesmoke;">
+                                               Login
+                                            </a>
+                                            @if (Route::has('register'))
+                                                <a href="{{ route('register') }}" 
+                                                   class="btn custom-color-btn px-3 radius-50" 
+                                                   style="background-color: #057833; color: whitesmoke;">
+                                                   Register
+                                                </a>
+                                            @endif
+                                        @endauth
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr class="new4" style="border: 1px solid #057833;">
+                        <br>
+
+                        <!-- Welcome message and instructions -->
+                        <div class="text-center w-75 m-auto">
+                          <h4 style="text-align: center; font-family: 'Poppins', sans-serif; font-size: 2.2rem; font-weight: bold; color: #ffffff; background: linear-gradient(135deg, #057833, #EE4049); padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);">
+    Welcome To Geothermal Development Company (GDC) Recruitment Portal
+</h4>
+
+                            <br>
+                            <p style="text-align: justify;">
+                               The Geothermal Development Company’s formation is a result of the 
+                                enactment of the Energy Act No. 12 of 2006, after the adoption 
+                                of Sessional Paper No. 4 on Energy in 2004 that unbundled the 
+                                country’s energy sector into five sub-sectors: generation, 
+                                transmission, distribution, regulation and policy.
+                            </p>
+
+                         <!-- Bootstrap, Poppins, Icons -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  body {
+    font-family: 'Poppins', sans-serif;
+  }
+
+  .card-soft {
+    border: none;
+    background-color: #fff;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease-in-out;
+  }
+
+  .card-soft:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 14px 32px rgba(0, 0, 0, 0.08);
+  }
+
+  .card-rounded {
+    border-radius: 50px;
+    overflow: hidden;
+  }
+
+  .card-rectangle {
+    border-radius: 10px;
+  }
+
+  .card-soft .card-header {
+    background-color: #2ecc71;
+    color: white;
+    font-weight: 600;
+    font-size: 1.1rem;
+    padding: 1rem 1.5rem;
+    text-align: center;
+  }
+
+  .card-soft .card-body {
+    padding: 1.75rem;
+    font-size: 0.95rem;
+    color: #444;
+  }
+
+  .card-soft ul {
+    list-style: none;
+    padding-left: 0;
+    margin-bottom: 0;
+  }
+
+  .card-soft ul li {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .card-soft ul li i {
+    color: #2ecc71;
+    font-size: 1rem;
+    margin-top: 3px;
+  }
+
+  .card-soft p {
+    margin: 0;
+  }
+
+  @media (max-width: 768px) {
+    .card-soft .card-body {
+      font-size: 0.9rem;
+      padding: 1.25rem;
+    }
+  }
+</style>
+
+<!-- Two Cards -->
+<div class="container my-5">
+  <div class="row g-4 justify-content-center">
+    <!-- Rounded Login Card -->
+    <div class="col-md-6 col-lg-5">
+      <div class="card card-soft card-rounded h-100">
+        <div class="card-header">
+          Login Credentials
+        </div>
+        <div class="card-body text-center">
+          <p>Log in using the email address and password you set during the registration process.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Rectangular Profile Card -->
+    <div class="col-md-6 col-lg-5">
+      <div class="card card-soft card-rectangle h-100">
+        <div class="card-header">
+          Create Your Profile
+        </div>
+        <div class="card-body">
+          <ul>
+            <li><i class="bi bi-check-circle-fill"></i>Fill in your personal details.</li>
+            <li><i class="bi bi-check-circle-fill"></i>Provide information regarding your academic qualifications.</li>
+            <li><i class="bi bi-check-circle-fill"></i>Include details about your professional qualifications.</li>
+            <li><i class="bi bi-check-circle-fill"></i>Specify any memberships you hold with professional bodies.</li>
+            <li><i class="bi bi-check-circle-fill"></i>Document your work experience.</li>
+            <li><i class="bi bi-check-circle-fill"></i>Upload a statutory identification document for verification.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+                            <p style="text-align: justify;">
+                                Once you have successfully completed the profile creation process, 
+                                you are now ready to apply for the desired position. Feel free to 
+                                apply for multiple positions if you meet the qualifications.<br><br>
+                                It is imperative to double-check and ensure that you have provided 
+                                accurate and up-to-date information throughout the registration 
+                                and profile creation process. Any inaccuracies may affect the 
+                                evaluation of your application.<br><br>
+                                We appreciate your interest in joining our team and look forward 
+                                to reviewing your application.
+                            </p>
+
+                            <div class="alert alert-danger alert-dismissible bg-danger text-white border-0 fade show" role="alert">
+                                Note: GDC does NOT have recruitment agents and does NOT charge a fee 
+                                at any stage of its recruitment process. Report any incident of extortion 
+                                to PSASB or to the Police!
+                            </div>
+
+                            @if (Route::has('login'))
+                                @auth
+                                    @php
+                                        $user = User::where('id', Auth::id())->first();
+                                    @endphp
+                                    @if($user && $user->role=="admin")
+                                        <a href="{{ route('admin.dashboard') }}" 
+                                           class="btn custom-color-btn px-3 radius-30" 
+                                           style="background-color: #EE4049; color: whitesmoke;">
+                                           Job Openings
+                                        </a>
+                                    @elseif($user && $user->role=="applicant")
+                                        <a href="{{ route('applicant.dashboard') }}" 
+                                           class="btn custom-color-btn px-3 radius-30" 
+                                           style="background-color: #EE4049; color: whitesmoke;">
+                                           Job Openings
+                                        </a>
+                                    @elseif($user && $user->role=="panelist")
+                                        <a href="{{ route('panelist.dashboard') }}" 
+                                           class="btn custom-color-btn px-3 radius-30" 
+                                           style="background-color: #EE4049; color: whitesmoke;">
+                                           Job Openings
+                                        </a>
+                                    @endif
+                                @else
+                                    <p>
+                                        <a href="{{ route('login') }}" 
+                                           class="btn btn-lg custom-color-btn" 
+                                           style="background-color: #D52E2F; color: whitesmoke;">
+                                           Job Openings &gt; »
+                                        </a>
+                                    </p>
+                                @endauth
+                            @endif
+                        </div>
+
+                        <br><br>
+
+                        <!-- Vacancies Table -->
+                        @if(count($vacancies) > 0)
+                            <div class="row">
+                                <div class="col-12">
+                                    <div class="table-container">
+                                        <table class="table table-hover table-striped table-bordered align-middle">
+                                            <thead class="table-dark">
+                                                <tr>
+                                                    <th scope="col">SN</th>
+                                                    <th scope="col">Job Title</th>
+                                                    <th scope="col">Terms Of Service</th>
+                                                    <th scope="col">Min Salary</th>
+                                                    <th scope="col">Max Salary</th>
+                                                    <th scope="col">No Sought</th>
+                                                    <th scope="col">Ref</th>
+                                                    <th scope="col">Details</th>
+                                                    <th scope="col">Apply</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach($vacancies as $key => $item)
+                                                    <tr>
+                                                        <th scope="row">{{ $key + 1 }}</th>
+                                                        <td class="text-uppercase">
+                                                            {{ $item->jobTitle }}
+                                                        </td>
+                                                        <td class="text-uppercase">
+                                                            {{ $item->jobtype }}
+                                                        </td>
+                                                        <td class="text-uppercase">
+                                                            {{ $item->min_salary }}
+                                                        </td>
+                                                        <td class="text-uppercase">
+                                                            {{ $item->max_salary }}
+                                                        </td>
+                                                        <td>
+                                                            {{ $item->Positions }}
+                                                        </td>
+                                                        <td class="text-uppercase">
+                                                            {{ $item->VacancyReference }}
+                                                        </td>
+                                                        <td>
+                                                            <!-- Trigger the modal with a button -->
+                                                            <button type="button" 
+                                                                    class="btn btn-sm btn-info" 
+                                                                    data-bs-toggle="modal" 
+                                                                    data-bs-target="#detailsModal{{ $item->id }}"
+                                                                    data-bs-toggle="tooltip"
+                                                                    data-bs-placement="top" 
+                                                                    title="View Details">
+                                                                Details
+                                                            </button>
+
+                                                            <!-- Modal for Job Details -->
+                                                            <div class="modal fade" 
+                                                                 id="detailsModal{{ $item->id }}" 
+                                                                 tabindex="-1" 
+                                                                 aria-labelledby="detailsModalLabel{{ $item->id }}" 
+                                                                 aria-hidden="true">
+                                                                <div class="modal-dialog modal-lg">
+                                                                    <div class="modal-content">
+                                                                        <div class="modal-header">
+                                                                            <h5 class="modal-title" 
+                                                                                id="detailsModalLabel{{ $item->id }}">
+                                                                                {{ $item->jobTitle }} Details
+                                                                            </h5>
+                                                                            <button type="button" 
+                                                                                    class="btn-close" 
+                                                                                    data-bs-dismiss="modal" 
+                                                                                    aria-label="Close">
+                                                                            </button>
+                                                                        </div>
+                                                                        <div class="modal-body">
+                                                                            <!-- Example job details (customize) -->
+                                                                            <p><strong>Job Reference:</strong> 
+                                                                                {{ $item->VacancyReference }}
+                                                                            </p>
+                                                                            <p><strong>Terms Of Service:</strong> 
+                                                                                {{ $item->jobtype }}
+                                                                            </p>
+                                                                            <p>
+                                                                                <strong>Salary Range:</strong> 
+                                                                                Ksh {{ $item->min_salary }} - 
+                                                                                Ksh {{ $item->max_salary }}
+                                                                            </p>
+                                                                            <p><strong>No. of Positions:</strong> 
+                                                                                {{ $item->Positions }}
+                                                                            </p>
+                                                                            <p>
+                                                                                <strong>Closing Date:</strong>
+                                                                                {{ \Carbon\Carbon::parse($item->closedate)->format('d M Y') }}
+                                                                            </p>
+                                                                            <hr>
+                                                                            <!-- Add more details about job here -->
+                                                                            <p>
+                                                                                Lorem ipsum dolor sit amet, consectetur adipiscing elit. 
+                                                                                Donec sed lacus ut enim feugiat placerat in nec eros. 
+                                                                                Vestibulum pulvinar nibh sit amet diam tempor ultrices.
+                                                                            </p>
+                                                                        </div>
+                                                                        <div class="modal-footer">
+                                                                            <button type="button" 
+                                                                                    class="btn btn-secondary" 
+                                                                                    data-bs-dismiss="modal">
+                                                                                Close
+                                                                            </button>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td>
+                                                            <a href="{{ route('login') }}" 
+                                                               class="btn btn-danger btn-sm" 
+                                                               data-bs-toggle="tooltip" 
+                                                               data-bs-placement="top" 
+                                                               title="Log in to Apply">
+                                                                Apply
+                                                            </a>
+                                                        </td>
+                                                    </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div> <!-- end .table-container -->
+                                </div><!-- end col -->
+                            </div><!-- end row -->
+                        @else
+                            <table class="table table-bordered align-middle">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>SN</th>
+                                        <th>Job Title</th>
+                                        <th>Grade</th>
+                                        <th>No. Sought</th>
+                                        <th>Ref</th>
+                                        <th>Details</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td colspan="7">
+                                            <div class="alert alert-danger mt-2" role="alert">
+                                                <strong>Note:</strong> There are currently no available job positions.
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        @endif
+
+                       <!-- Required Fonts, Bootstrap & Icons -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  body {
+    font-family: 'Poppins', sans-serif;
+    background: linear-gradient(135deg, #eafaf1, #f2fef7);
+    padding: 40px;
+  }
+
+  .card-custom {
+    border: none;
+    border-radius: 16px;
+    overflow: hidden;
+    background-color: #fff;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.07);
+    transition: transform 0.3s ease;
+  }
+
+  .card-custom:hover {
+    transform: translateY(-3px);
+  }
+
+  .card-header-custom {
+    background: linear-gradient(135deg, #2ecc71, #27ae60);
+    color: white;
+    padding: 1.75rem 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .card-header-custom .icon-circle {
+    background-color: #ffffff;
+    color: #27ae60;
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.4rem;
+  }
+
+  .card-body-custom {
+    padding: 2rem;
+  }
+
+  .card-body-custom p {
+    color: #333;
+    margin-bottom: 1.5rem;
+  }
+
+  .requirements-list li {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 1rem;
+    color: #333;
+    font-size: 1rem;
+    opacity: 0;
+    animation: fadeInUp 0.6s ease forwards;
+  }
+
+  .requirements-list li:nth-child(1) { animation-delay: 0.1s; }
+  .requirements-list li:nth-child(2) { animation-delay: 0.2s; }
+  .requirements-list li:nth-child(3) { animation-delay: 0.3s; }
+  .requirements-list li:nth-child(4) { animation-delay: 0.4s; }
+  .requirements-list li:nth-child(5) { animation-delay: 0.5s; }
+
+  .requirements-list i {
+    color: #2ecc71;
+    font-size: 1.2rem;
+  }
+
+  @keyframes fadeInUp {
+    from {
+      transform: translateY(15px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  .btn-custom {
+    margin-top: 20px;
+    background-color: #2ecc71;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-weight: 500;
+    border-radius: 8px;
+    transition: background 0.3s ease;
+  }
+
+  .btn-custom:hover {
+    background-color: #27ae60;
+  }
+
+  @media (max-width: 768px) {
+    .card-header-custom {
+      flex-direction: column;
+      align-items: flex-start;
+      text-align: left;
+    }
+  }
+</style>
+
+<div class="container d-flex justify-content-center align-items-center">
+  <div class="card-custom w-100 w-md-75 w-lg-50">
+    <div class="card-header-custom">
+      <div class="icon-circle" aria-hidden="true">
+        <i class="bi bi-shield-check"></i>
+      </div>
+      <div>
+        <h4 class="mb-0 fw-semibold">Clearance Certificate Requirements</h4>
+       <small class="text-white">Documents required from successful candidates</small>
+
+      </div>
+    </div>
+    <div class="card-body-custom">
+      <p><strong>Only successful candidates</strong> will be required to submit clearance certificates from the following bodies:</p>
+      <ul class="requirements-list list-unstyled">
+        <li><i class="bi bi-check-circle-fill"></i> Kenya Revenue Authority (Valid Tax compliance certificate).</li>
+        <li><i class="bi bi-check-circle-fill"></i> Directorate of Criminal Investigations (Certificate of good conduct).</li>
+        <li><i class="bi bi-check-circle-fill"></i> Higher Education Loans Board (Compliance certificate, where applicable).</li>
+        <li><i class="bi bi-check-circle-fill"></i> Ethics and Anti–Corruption Commission (Self-Declaration form).</li>
+        <li><i class="bi bi-check-circle-fill"></i> Credit Reference Bureau (Certificate of clearance or credit report).</li>
+      </ul>
+
+    </div>
+  </div>
+</div>
+
+                      <!-- Include Bootstrap, Poppins, and Icons if not already -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+
+<style>
+  .data-disclaimer {
+    font-family: 'Poppins', sans-serif;
+    color: #555;
+    font-style: italic;
+    text-align: center;
+    font-size: 0.95rem;
+    max-width: 720px;
+    margin: 40px auto 0;
+    position: relative;
+    padding-top: 1rem;
+  }
+
+  .data-disclaimer::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    height: 2px;
+    width: 60px;
+    background-color: #2ecc71;
+    border-radius: 4px;
+  }
+
+  .data-disclaimer i {
+    color: #2ecc71;
+    margin-right: 6px;
+  }
+</style>
+
+<p class="data-disclaimer">
+  <i class="bi bi-shield-lock"></i>
+  GDC commits to handling your data in accordance with the <strong>Data Protection Act, 2019</strong> and any other relevant legislation.
+</p>
+
+                    </div> <!-- end card-body -->
+                </div> <!-- end card -->
+
+                <div class="row mt-3">
+                    <div class="col-12 text-center">
+                        <!-- Additional footer content if needed -->
+                    </div>
+                </div>
+            </div> <!-- end col -->
+        </div> <!-- end row -->
+    </div> <!-- end container -->
+</div> <!-- end page -->
+
+<!-- Font & Bootstrap (if not already included) -->
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<style>
+  .footer-modern {
+    background: #2ecc71;
+    color: white;
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.95rem;
+    padding: 16px 0;
+    box-shadow: 0 -1px 8px rgba(0, 0, 0, 0.05);
+  }
+
+  .footer-modern a {
+    color: #ffffff;
+    font-weight: 600;
+    text-decoration: none;
+    transition: color 0.3s ease;
+  }
+
+  .footer-modern a:hover {
+    color: #d4f5e4;
+    text-decoration: underline;
+  }
+
+  @media (max-width: 576px) {
+    .footer-modern {
+      font-size: 0.85rem;
+      padding: 12px;
+    }
+  }
+</style>
+
+<!-- Footer -->
+<footer class="footer-modern text-center">
+  &copy; <script>document.write(new Date().getFullYear())</script>
+  <a href="https://www.gdc.co.ke/" target="_blank" aria-label="Visit GDC Website">
+    All Rights Reserved. Geothermal Development Company
+  </a>
+</footer>
+
+
+<!-- Vendor JS -->
+<script src="{{ asset('backend/assets/js/vendor.min.js') }}"></script>
+<!-- Bootstrap 5 JS -->
+<script src="{{ asset('backend/assets/js/bootstrap.bundle.min.js') }}"></script>
+<!-- App JS -->
+<script src="{{ asset('backend/assets/js/app.min.js') }}"></script>
+
+<!-- Initialize Bootstrap Tooltips -->
+<script>
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+      return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+</script>
+
+</body>
+</html>

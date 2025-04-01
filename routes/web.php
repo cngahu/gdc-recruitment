@@ -96,6 +96,9 @@ Route::middleware(['auth','verified'])->group(function (){
 });
 
 
+Route::get('/', function () {
+    return view('welcome'); 
+});
 
 Route::controller(RecruitmentController::class)->group(function(){
 

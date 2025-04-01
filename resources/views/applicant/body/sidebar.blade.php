@@ -14,7 +14,7 @@
 
             <ul id="side-menu">
 
-                <li class="menu-title">Navigation</li>
+                <li class="menu-title">Dashboard</li>
                 <li>
                     <a href="{{route('applicant.dashboard')}}">
                         <i class="mdi mdi-view-dashboard-outline"></i>
@@ -291,3 +291,99 @@
     <!-- Sidebar -left -->
 
 </div>
+<style>
+
+        font-family: 'Poppins', sans-serif !important;
+    }
+
+    /* Basic layout and styling for the sidebar */
+    .left-side-menu {
+        background-color: #fff; /* Change to desired background color */
+        min-height: 100vh;
+        border-right: 1px solid #e1e1e1; /* Subtle border on the right */
+        padding-top: 1rem; /* Space at the top (optional) */
+    }
+
+    .left-side-menu .menu-title {
+        padding: 1rem;
+        font-weight: 600;
+        color: #555; /* Title text color */
+        text-transform: uppercase; /* Optional: uppercase styling */
+        letter-spacing: 0.5px; /* Optional: spacing for readability */
+    }
+
+    /* Top-level menu items */
+    #side-menu {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
+
+    #side-menu > li {
+        position: relative;
+    }
+
+    #side-menu > li > a {
+        display: block;
+        padding: 0.75rem 1rem;
+        color: #333; 
+        text-decoration: none;
+        transition: background-color 0.2s, color 0.2s;
+    }
+
+    #side-menu > li > a:hover,
+    #side-menu > li > a:focus {
+        background-color: #f5f5f5; /* Hover color */
+        color: #000; /* Hover text color */
+        text-decoration: none; 
+    }
+
+    /* Icons spacing */
+    #side-menu > li > a .mdi {
+        margin-right: 8px;
+    }
+
+    /* Badge styling */
+    .badge.bg-pink {
+        background-color: #e91e63 !important; /* Material pink */
+    }
+
+    /* Sub-menu items */
+    .nav-second-level {
+        list-style: none;
+        margin: 0;
+        padding: 0 0 0 1rem; /* Indent sub-menu items */
+    }
+
+    .nav-second-level li a {
+        display: block;
+        padding: 0.5rem 1rem;
+        color: #666;
+        text-decoration: none;
+        transition: background-color 0.2s, color 0.2s;
+    }
+
+    .nav-second-level li a:hover,
+    .nav-second-level li a:focus {
+        background-color: #f5f5f5;
+        color: #000;
+        text-decoration: none;
+    }
+
+    /* Optional styling for collapse arrow icons */
+    .menu-arrow {
+        float: right;
+        transition: transform 0.3s;
+    }
+
+    /* Example rotation for arrow on open (if you toggle a class in JS) */
+    .menu-arrow.open {
+        transform: rotate(90deg);
+    }
+
+    /* Improve spacing for the badge or other float-end items */
+    .float-end {
+        float: right !important;
+        margin-left: auto;
+    }
+</style>

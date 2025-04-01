@@ -1,0 +1,266 @@
+use App\Models\Report;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Maatwebsite\Excel\Concerns\FromView;
+use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Contracts\View\View as ViewContract;
+
+public function exportFullProjectReport2(Request $request)
+{
+    try {
+        $reports = Report::with([
+                'target.indicator.output.project.budgetEstimates.financialYear',
+                'target.indicator.output.project.budgets.financialYear',
+                'target.fy',
+                'target.quarter',
+                'user'
+            ])
+            ->whereHas('target.indicator.output.project')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $groupedReports = $reports->groupBy(function ($report) {
+            return optional($report->target->fy)->year;
+        });
+
+        $html = <<<'BLADE'
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Budget & Estimates Report</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 12px;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            background-color: #fff;
+        }
+        h2 {
+            background: linear-gradient(90deg, #388E3C 0%, #66BB6A 100%);
+            color: #fff;
+            padding: 14px 20px;
+            margin: 40px 0 10px;
+            border-left: 6px solid #1B5E20;
+            font-size: 18px;
+            font-weight: bold;
+            box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.15);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            margin-bottom: 30px;
+            font-size: 12px;
+        }
+        thead th {
+            background-color: #2E7D32;
+            color: #fff;
+            text-align: left;
+            padding: 12px;
+            border: 2px solid #1B5E20 !important;
+            font-weight: bold;
+        }
+        tbody td {
+            border: 1px solid #ccc !important;
+            padding: 10px;
+            vertical-align: top;
+        }
+        tbody tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        tbody tr:nth-child(odd) {
+            background-color: #ffffff;
+        }
+        .spent {
+            font-weight: bold;
+            background-color: #FFF3CD;
+            color: #795548;
+        }
+        .estimate {
+            font-weight: bold;
+            color: #1565C0;
+        }
+        .actual {
+            font-weight: bold;
+            color: #C62828;
+        }
+    </style>
+</head>
+<body>
+@foreach($groupedReports as $fy => $reportsGroup)
+    @if($fy)
+    <h2>Financial Year: {{ $fy }}</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Project</th>
+                <th>Output</th>
+                <th>Indicator</th>
+                <th>Unit of Measure</th>
+                <th>Estimated Budget</th>
+                <th>Actual Budget</th>
+                <th>FY</th>
+                <th>Quarter</th>
+                <th>Target</th>
+                <th>Status</th>
+                <th>Spent</th>
+                <th>Output Value</th>
+                <th>Comments</th>
+                <th>Challenges</th>
+                <th>Recommendations</th>
+                <th>Reported By</th>
+                <th>Created</th>
+                <th>Updated</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach($reportsGroup as $index => $report)
+            @php
+                $project       = optional($report->target->indicator->output->project);
+                $projectName   = $project->project_name;
+				$plannedStartDate = $project->planned_start_date ? \Carbon\Carbon::parse($project->planned_start_date)->format('d M Y') : '';
+                $plannedEndDate = $project->planned_end_date ? \Carbon\Carbon::parse($project->planned_end_date)->format('d M Y') : '';
+                $outputName    = optional($report->target->indicator->output)->name;
+                $indicatorName = optional($report->target->indicator)->name;
+                $unitOfMeasure = optional($report->target->indicator)->unit_of_measure;
+                $quarter       = optional($report->target->quarter)->quarter;
+                $targetValue   = $report->target->target_value;
+                $status        = $report->progress_status;
+                $spent         = $report->amount_spent ?? 0;
+                $outputValue   = $report->output_value;
+                $comments      = $report->comments;
+                $challenges    = $report->challenges;
+                $recommendations = $report->recommendations;
+                $reportedBy    = optional($report->user)->name;
+                $created       = \Carbon\Carbon::parse($report->created_at)->format('d M Y');
+                $updated       = \Carbon\Carbon::parse($report->updated_at)->format('d M Y');
+
+                $estimateAmount = '';
+                if ($project && $project->relationLoaded('budgetEstimates') && $project->budgetEstimates) {
+                    $estimatesForYear = $project->budgetEstimates->filter(function($est) use ($fy) {
+                        return optional($est->financialYear)->year == $fy;
+                    });
+                    if ($estimatesForYear->count()) {
+                        $totalEstimate = $estimatesForYear->sum('budget');
+                        $estimateAmount = 'KES ' . number_format($totalEstimate, 2);
+                    }
+                }
+
+                $actualBudgetAmount = '';
+                if ($project && $project->relationLoaded('budgets') && $project->budgets) {
+                    $budgetsForYear = $project->budgets->filter(function($bud) use ($fy) {
+                        return optional($bud->financialYear)->year == $fy;
+                    });
+                    if ($budgetsForYear->count()) {
+                        $totalActual = $budgetsForYear->sum('budget_amount');
+                        $actualBudgetAmount = 'KES ' . number_format($totalActual, 2);
+                    }
+                }
+            @endphp
+            <tr>
+                <td>{{ $loop->iteration }}</td>
+                <td>{{ $projectName ?? '' }}</td>
+				<td>{{ $plannedStartDate }}</td>
+                <td>{{ $plannedEndDate }}</td>
+                <td>{{ $outputName ?? '' }}</td>
+                <td>{{ $indicatorName ?? '' }}</td>
+                <td>{{ $unitOfMeasure ?? '' }}</td>
+                <td class="estimate">{{ $estimateAmount }}</td>
+                <td class="actual">{{ $actualBudgetAmount }}</td>
+                <td>{{ $fy }}</td>
+                <td>{{ $quarter ?? '' }}</td>
+                <td>{{ $targetValue ?? '' }}</td>
+                <td>{{ $status ?? '' }}</td>
+                <td class="spent">{{ $spent ? 'KES ' . number_format($spent, 2) : '' }}</td>
+                <td>{{ $outputValue ?? '' }}</td>
+                <td>{{ $comments ?? '' }}</td>
+                <td>{{ $challenges ?? '' }}</td>
+                <td>{{ $recommendations ?? '' }}</td>
+                <td>{{ $reportedBy ?? '' }}</td>
+                <td>{{ $created }}</td>
+                <td>{{ $updated }}</td>
+            </tr>
+        @endforeach
+        </tbody>
+    </table>
+    @endif
+@endforeach
+</body>
+</html>
+BLADE;
+
+        $renderedView = \Blade::render($html, [
+            'groupedReports' => $groupedReports,
+        ]);
+
+        $renderedView = mb_convert_encoding($renderedView, 'HTML-ENTITIES', 'UTF-8');
+        $renderedView = preg_replace('/&(?!#?[a-z0-9]+;)/i', '&amp;', $renderedView);
+
+        libxml_use_internal_errors(true);
+        $dom = new \DOMDocument();
+        $dom->loadHTML($renderedView);
+        $errors = libxml_get_errors();
+        if (!empty($errors)) {
+            $errorMessage = '';
+            foreach ($errors as $error) {
+                $errorMessage .= trim($error->message) . "\n";
+            }
+            libxml_clear_errors();
+            throw new \Exception("Rendered HTML contains errors: " . $errorMessage);
+        }
+        libxml_clear_errors();
+
+        $view = new class($renderedView) implements ViewContract {
+            protected $content;
+            protected $data = [];
+            public function __construct($content)
+            {
+                $this->content = $content;
+            }
+            public function render()
+            {
+                return $this->content;
+            }
+            public function name()
+            {
+                return 'inline-view';
+            }
+            public function with($key, $value = null)
+            {
+                if (is_array($key)) {
+                    $this->data = array_merge($this->data, $key);
+                } else {
+                    $this->data[$key] = $value;
+                }
+                return $this;
+            }
+            public function getData()
+            {
+                return $this->data;
+            }
+        };
+
+        $export = new class($view) implements FromView {
+            protected $view;
+            public function __construct($view)
+            {
+                $this->view = $view;
+            }
+            public function view(): ViewContract
+            {
+                return $this->view;
+            }
+        };
+
+        return Excel::download($export, 'focused_all_reports.xlsx');
+    } catch (\Exception $e) {
+        Log::error('Error generating focused report: ' . $e->getMessage());
+        return response()->json([
+            'message' => 'An error occurred while generating the focused report.',
+            'error'   => $e->getMessage()
+        ], 500);
+    }
+}
